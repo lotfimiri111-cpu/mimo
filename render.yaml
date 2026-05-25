@@ -1,11 +1,18 @@
 services:
   - type: web
-    name: mathkarati-pro-v18
+    name: mathkarati-pro
     env: python
-    buildCommand: pip install -r requirements.txt && apt-get install -y libreoffice poppler-utils -q
-    startCommand: gunicorn app:app --bind 0.0.0.0:$PORT --workers 2 --timeout 120 --preload
+    buildCommand: chmod +x build.sh && bash build.sh
+    startCommand: gunicorn app:app --bind 0.0.0.0:$PORT --workers 1 --timeout 180 --keep-alive 5
     envVars:
-      - key: SECRET_KEY
-        generateValue: true
       - key: PORT
         value: 10000
+      - key: ADMIN_PASSWORD_HASH
+        generateValue: false
+        value: "CHANGE_ME_sha256_of_your_password"
+      - key: SECRET_KEY
+        generateValue: true
+      - key: STORAGE_DIR
+        value: /opt/render/project/src/storage
+      - key: DB_PATH
+        value: /opt/render/project/src/mathkarati_payments.db

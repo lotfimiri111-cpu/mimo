@@ -35,7 +35,7 @@ pip install --no-cache-dir -r requirements.txt
 
 echo ""
 echo "════════════════════════════════"
-echo "  Build Complete — v17"
+echo "  Build Complete — v19"
 echo "  Python : $(python3 --version)"
 echo "  Cairo  : $(fc-list 2>/dev/null | grep -ic cairo) file(s)"
 echo "  Amiri  : $(fc-list 2>/dev/null | grep -ic amiri) file(s)"

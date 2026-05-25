@@ -224,6 +224,99 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
 .bnew:hover{border-color:var(--gold);color:var(--gold)}
 .fallback-note{margin:10px 0 2px;padding:8px 12px;background:rgba(255,180,0,.12);border:1px solid rgba(255,180,0,.3);border-radius:7px;font-size:11px;color:#e8c060;text-align:center}
 
+/* ══ PAYMENT OVERLAY ══ */
+.pay-ov{position:fixed;inset:0;background:rgba(7,23,47,.82);backdrop-filter:blur(14px);display:none;align-items:center;justify-content:center;z-index:2000;padding:16px}
+.pay-ov.open{display:flex}
+.pay-box{background:#fff;border-radius:22px;width:100%;max-width:520px;max-height:90vh;overflow-y:auto;box-shadow:0 30px 80px rgba(7,23,47,.38);animation:min .25s ease}
+.pay-head{background:linear-gradient(135deg,var(--navy),#152d58);padding:22px 26px 18px;border-radius:22px 22px 0 0;position:sticky;top:0;z-index:2}
+.pay-head h2{color:#fff;font-size:17px;font-weight:800;margin:0}
+.pay-head p{color:rgba(255,255,255,.65);font-size:11px;margin:2px 0 0}
+.pay-close{position:absolute;top:16px;left:18px;background:rgba(255,255,255,.15);border:none;border-radius:50%;width:30px;height:30px;color:#fff;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.pay-body{padding:22px 26px 26px}
+.pay-price{background:linear-gradient(135deg,var(--gold),var(--gold-l));border-radius:14px;padding:16px;text-align:center;margin-bottom:18px}
+.pay-price .amt{font-size:34px;font-weight:900;color:var(--navy);line-height:1}
+.pay-price .cur{font-size:13px;color:var(--navy);opacity:.7;margin-top:3px}
+.pay-section{margin-bottom:18px}
+.pay-section h4{font-size:12px;font-weight:800;color:var(--navy);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.pay-methods{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.pm-card{border:2px solid var(--bd);border-radius:12px;padding:14px 10px;cursor:pointer;text-align:center;transition:all .2s;position:relative}
+.pm-card:hover{border-color:var(--gold);background:rgba(198,160,60,.05)}
+.pm-card.sel{border-color:var(--gold);background:rgba(198,160,60,.08)}
+.pm-card .pm-icon{font-size:26px;margin-bottom:5px}
+.pm-card .pm-name{font-size:12px;font-weight:700;color:var(--navy)}
+.pm-card .pm-num{font-size:10px;color:var(--muted);margin-top:2px;font-family:monospace}
+.pm-check{position:absolute;top:7px;right:8px;width:16px;height:16px;background:var(--gold);border-radius:50%;display:none;align-items:center;justify-content:center;font-size:9px;color:var(--navy)}
+.pm-card.sel .pm-check{display:flex}
+.pay-info-box{background:var(--sf);border:1px solid var(--bd);border-radius:12px;padding:14px;font-size:12px;color:var(--text)}
+.pay-info-box .pi-row{display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px dashed var(--bd)}
+.pay-info-box .pi-row:last-child{border:none}
+.pay-info-box .pi-label{color:var(--muted)}
+.pay-info-box .pi-val{font-weight:700;font-family:monospace;color:var(--navy);font-size:13px}
+.pay-upload-area{border:2px dashed var(--bd);border-radius:12px;padding:20px;text-align:center;cursor:pointer;transition:all .2s;position:relative;overflow:hidden}
+.pay-upload-area:hover,.pay-upload-area.drag{border-color:var(--gold);background:rgba(198,160,60,.05)}
+.pay-upload-area input{position:absolute;inset:0;opacity:0;cursor:pointer}
+.pay-upload-area .pu-icon{font-size:28px;margin-bottom:6px}
+.pay-upload-area .pu-text{font-size:12px;color:var(--muted)}
+.pay-upload-area .pu-sub{font-size:10px;color:var(--muted);margin-top:2px}
+.pay-upload-preview{display:none;align-items:center;gap:10px;padding:10px;background:rgba(16,185,129,.07);border:1px solid rgba(16,185,129,.2);border-radius:10px;margin-top:8px}
+.pay-upload-preview .pup-icon{font-size:22px}
+.pup-name{font-size:11px;font-weight:700;color:var(--text)}
+.pup-size{font-size:10px;color:var(--muted)}
+.pup-remove{margin-right:auto;background:none;border:none;color:var(--err);cursor:pointer;font-size:14px}
+.pay-field{margin-bottom:12px}
+.pay-field label{font-size:11px;font-weight:700;color:var(--navy);display:block;margin-bottom:4px}
+.pay-field input{width:100%;padding:9px 12px;border:1.5px solid var(--bd);border-radius:9px;font-family:inherit;font-size:13px;direction:rtl}
+.pay-field input:focus{outline:none;border-color:var(--gold)}
+.pay-submit{width:100%;padding:14px;border-radius:12px;border:none;background:linear-gradient(135deg,var(--navy),#1a3a6b);color:#fff;font-family:inherit;font-size:14px;font-weight:800;cursor:pointer;transition:all .2s;margin-top:4px}
+.pay-submit:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 8px 24px rgba(7,23,47,.25)}
+.pay-submit:disabled{opacity:.5;cursor:not-allowed}
+.pay-steps{display:flex;gap:0;margin-bottom:20px;border-radius:12px;overflow:hidden;border:1px solid var(--bd)}
+.ps-step{flex:1;padding:10px 6px;text-align:center;font-size:10px;font-weight:700;color:var(--muted);background:var(--sf);border-left:1px solid var(--bd);transition:all .2s;position:relative}
+.ps-step:last-child{border-left:none}
+.ps-step.act{background:var(--navy);color:#fff}
+.ps-step.done{background:var(--ok);color:#fff}
+.ps-num{width:18px;height:18px;border-radius:50%;background:rgba(0,0,0,.1);display:inline-flex;align-items:center;justify-content:center;font-size:9px;margin-bottom:2px}
+.ps-step.act .ps-num,.ps-step.done .ps-num{background:rgba(255,255,255,.25)}
+
+/* ══ CODE REDEMPTION OVERLAY ══ */
+.code-ov{position:fixed;inset:0;background:rgba(7,23,47,.82);backdrop-filter:blur(14px);display:none;align-items:center;justify-content:center;z-index:2000;padding:16px}
+.code-ov.open{display:flex}
+.code-box{background:#fff;border-radius:22px;width:100%;max-width:420px;padding:36px 30px;text-align:center;box-shadow:0 30px 80px rgba(7,23,47,.38);animation:min .25s ease}
+.code-box h2{font-size:20px;font-weight:900;color:var(--navy);margin-bottom:6px}
+.code-box p{font-size:12px;color:var(--muted);margin-bottom:22px}
+.code-input-wrap{display:flex;gap:8px;margin-bottom:14px}
+.code-input{flex:1;padding:14px 16px;border:2.5px solid var(--bd);border-radius:12px;font-size:20px;font-weight:800;letter-spacing:4px;text-align:center;font-family:monospace;text-transform:uppercase;transition:border-color .2s}
+.code-input:focus{outline:none;border-color:var(--gold)}
+.code-btn{padding:14px 20px;border-radius:12px;border:none;background:var(--navy);color:#fff;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;transition:all .2s}
+.code-btn:hover{background:#1a3a6b}
+.code-err{color:var(--err);font-size:12px;margin-bottom:10px;display:none}
+.code-close-btn{background:none;border:1.5px solid var(--bd);border-radius:9px;padding:7px 20px;font-size:12px;color:var(--muted);cursor:pointer;font-family:inherit;margin-top:8px}
+
+/* Preview lock banner */
+.preview-lock{background:linear-gradient(135deg,var(--navy),#152d58);border-radius:14px;padding:18px 20px;margin:16px 0;display:flex;align-items:center;gap:14px;position:relative;overflow:hidden}
+.preview-lock::before{content:'';position:absolute;top:-20px;right:-20px;width:100px;height:100px;background:radial-gradient(circle,rgba(198,160,60,.18),transparent 70%)}
+.pl-icon{font-size:32px;flex-shrink:0}
+.pl-text h4{font-size:14px;font-weight:800;color:#fff;margin-bottom:3px}
+.pl-text p{font-size:11px;color:rgba(255,255,255,.65);margin:0}
+.pl-actions{margin-right:auto;display:flex;flex-direction:column;gap:6px;flex-shrink:0}
+.pl-pay-btn{padding:9px 16px;border-radius:9px;border:none;background:linear-gradient(135deg,var(--gold),var(--gold-l));color:var(--navy);font-family:inherit;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap;transition:all .2s}
+.pl-pay-btn:hover{transform:translateY(-1px)}
+.pl-code-btn{padding:7px 16px;border-radius:9px;border:1.5px solid rgba(255,255,255,.25);background:transparent;color:rgba(255,255,255,.8);font-family:inherit;font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;transition:all .2s}
+.pl-code-btn:hover{border-color:rgba(255,255,255,.5)}
+
+/* Watermark on preview */
+.preview-wm-overlay{position:absolute;inset:0;pointer-events:none;z-index:10;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.preview-wm-text{font-size:48px;font-weight:900;color:rgba(7,23,47,.08);transform:rotate(-35deg);white-space:nowrap;user-select:none;font-family:'Cairo',sans-serif;letter-spacing:3px}
+
+/* Preview container */
+.preview-container{position:relative;background:#1a1a2e;border-radius:14px;overflow:hidden;margin-top:14px;min-height:200px}
+.preview-slides-viewer{width:100%;aspect-ratio:16/9;position:relative}
+.preview-nav{display:flex;align-items:center;justify-content:center;gap:12px;padding:10px;background:rgba(0,0,0,.6)}
+.pn-btn{background:rgba(255,255,255,.15);border:none;border-radius:8px;padding:6px 14px;color:#fff;font-family:inherit;font-size:12px;font-weight:600;cursor:pointer;transition:all .2s}
+.pn-btn:hover{background:rgba(255,255,255,.28)}
+.pn-btn:disabled{opacity:.35;cursor:not-allowed}
+.pn-counter{color:rgba(255,255,255,.7);font-size:12px;font-weight:600;min-width:60px;text-align:center}
+
 @media(max-width:900px){
   .mpick{grid-template-columns:1fr 1fr}}
 @media(max-width:660px){
@@ -234,6 +327,9 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
   .hdr-right{margin-right:0;width:100%}
 }
 </style>
+  <!-- pptxjs: عرض PPTX مباشرة في المتصفح -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/pptxjs@0.1.2/dist/pptxjs.min.js"></script>
 </head>
 <body>
 
@@ -724,6 +820,128 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
     <div class="ptrack" id="ptrack"><div class="pfill" id="pfill"></div></div>
     <div class="plbl" id="plbl">0%</div>
     <button id="bcancel" onclick="cancelGen()" style="margin-top:14px;background:none;border:1px solid #ccc;border-radius:8px;padding:6px 20px;font-size:12px;color:#888;cursor:pointer;">✕ إلغاء</button>
+  </div>
+</div>
+
+<!-- ══ PAYMENT OVERLAY ══ -->
+<div class="pay-ov" id="payOv">
+  <div class="pay-box">
+    <div class="pay-head" style="position:relative">
+      <button class="pay-close" onclick="closePayOv()">✕</button>
+      <h2>💳 إتمام عملية الشراء</h2>
+      <p>عرض PowerPoint الاحترافي — مذكرة تخرج</p>
+    </div>
+    <div class="pay-body">
+      <!-- Steps -->
+      <div class="pay-steps">
+        <div class="ps-step act" id="ps1"><div class="ps-num">1</div><br>اختيار الدفع</div>
+        <div class="ps-step" id="ps2"><div class="ps-num">2</div><br>رفع الوصل</div>
+        <div class="ps-step" id="ps3"><div class="ps-num">3</div><br>انتظار التفعيل</div>
+      </div>
+
+      <!-- Step 1: Method -->
+      <div id="payStep1">
+        <div class="pay-price">
+          <div class="amt">800</div>
+          <div class="cur">دينار جزائري — سعر ثابت</div>
+        </div>
+        <div class="pay-section">
+          <h4>🏦 اختر طريقة الدفع</h4>
+          <div class="pay-methods">
+            <div class="pm-card" id="pm-ccp" onclick="selectMethod('ccp')">
+              <div class="pm-check">✓</div>
+              <div class="pm-icon">🏛️</div>
+              <div class="pm-name">CCP</div>
+              <div class="pm-num">CCP: 000 12345678 / Clé 67</div>
+            </div>
+            <div class="pm-card" id="pm-baridimob" onclick="selectMethod('baridimob')">
+              <div class="pm-check">✓</div>
+              <div class="pm-icon">📱</div>
+              <div class="pm-name">BaridiMob</div>
+              <div class="pm-num">0799 000 000</div>
+            </div>
+          </div>
+        </div>
+        <div class="pay-section" id="payInfoBox" style="display:none">
+          <h4>📋 معلومات الحوالة</h4>
+          <div class="pay-info-box" id="payInfoContent"></div>
+        </div>
+        <div class="pay-section">
+          <h4>👤 بياناتك</h4>
+          <div class="pay-field">
+            <label>الاسم الكامل <span style="color:var(--err)">*</span></label>
+            <input type="text" id="pay-name" placeholder="كما هو في وثائقك الجامعية" />
+          </div>
+          <div class="pay-field">
+            <label>البريد الإلكتروني</label>
+            <input type="text" id="pay-email" placeholder="لإرسال كود التفعيل (اختياري)" />
+          </div>
+          <div class="pay-field">
+            <label>رقم الهاتف</label>
+            <input type="text" id="pay-phone" placeholder="0XX XXX XXXX" />
+          </div>
+        </div>
+        <button class="pay-submit" id="payNext1Btn" onclick="payGoStep2()">التالي — رفع الوصل →</button>
+      </div>
+
+      <!-- Step 2: Receipt upload -->
+      <div id="payStep2" style="display:none">
+        <div style="text-align:center;margin-bottom:18px">
+          <div style="font-size:40px;margin-bottom:8px">📄</div>
+          <div style="font-size:14px;font-weight:800;color:var(--navy)">ارفع وصل التسديد</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:4px">صورة أو PDF للوصل (JPG، PNG، PDF)</div>
+        </div>
+        <div class="pay-upload-area" id="uploadArea">
+          <input type="file" id="receiptFile" accept="image/jpeg,image/png,image/webp,application/pdf" onchange="onReceiptSelect(this)">
+          <div class="pu-icon">☁️</div>
+          <div class="pu-text">اسحب الملف هنا أو انقر للاختيار</div>
+          <div class="pu-sub">JPG · PNG · PDF — حتى 10MB</div>
+        </div>
+        <div class="pay-upload-preview" id="uploadPreview">
+          <div class="pup-icon" id="previewIcon">📄</div>
+          <div>
+            <div class="pup-name" id="previewName">—</div>
+            <div class="pup-size" id="previewSize">—</div>
+          </div>
+          <button class="pup-remove" onclick="removeReceipt()" title="حذف">✕</button>
+        </div>
+        <div style="margin-top:16px;display:flex;gap:8px">
+          <button class="pay-submit" style="flex:0 0 auto;padding:14px 18px;background:rgba(0,0,0,.08);color:var(--text)" onclick="payGoBack()">← رجوع</button>
+          <button class="pay-submit" id="paySubmitBtn" onclick="submitOrder()" style="flex:1">📤 إرسال الطلب</button>
+        </div>
+      </div>
+
+      <!-- Step 3: Waiting -->
+      <div id="payStep3" style="display:none;text-align:center">
+        <div style="font-size:50px;margin:10px 0 12px">⏳</div>
+        <div style="font-size:16px;font-weight:800;color:var(--navy);margin-bottom:8px">طلبك قيد المراجعة</div>
+        <div style="font-size:12px;color:var(--muted);margin-bottom:18px;line-height:1.7">سيتم مراجعة وصل الدفع خلال <strong>24 ساعة</strong>.<br>ستتلقى كود التفعيل عبر البريد الإلكتروني أو يمكنك متابعة حالة طلبك هنا.</div>
+        <div style="background:var(--sf);border:1px solid var(--bd);border-radius:12px;padding:14px;margin-bottom:16px;font-size:12px">
+          <div style="color:var(--muted);margin-bottom:4px">رقم طلبك:</div>
+          <div style="font-size:18px;font-weight:800;font-family:monospace;color:var(--navy);letter-spacing:2px" id="orderIdDisplay">—</div>
+          <div style="font-size:10px;color:var(--muted);margin-top:4px">احتفظ بهذا الرقم للمتابعة</div>
+        </div>
+        <button class="pl-code-btn" style="border-color:var(--bd);color:var(--text);margin-bottom:8px;width:100%;padding:10px" onclick="closePayOv();openCodeOv()">🔑 عندي كود تفعيل — تحميل الآن</button>
+        <button class="code-close-btn" onclick="closePayOv()">إغلاق</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ CODE REDEMPTION OVERLAY ══ -->
+<div class="code-ov" id="codeOv">
+  <div class="code-box">
+    <div style="font-size:48px;margin-bottom:10px">🔑</div>
+    <h2>كود التفعيل</h2>
+    <p>أدخل كود التفعيل الذي وصلك بعد تأكيد الدفع</p>
+    <div class="code-input-wrap">
+      <input type="text" class="code-input" id="codeInput" placeholder="XXXXXXXX" maxlength="8"
+             oninput="this.value=this.value.toUpperCase().replace(/[^A-Z0-9]/g,'')" onkeydown="if(event.key==='Enter')redeemCode()">
+      <button class="code-btn" onclick="redeemCode()">✓ تحقق</button>
+    </div>
+    <div class="code-err" id="codeErr">❌ الكود غير صحيح أو منتهي الصلاحية</div>
+    <div id="codeSuccess" style="display:none;color:var(--ok);font-size:12px;margin-bottom:10px">✅ جاري تحميل ملفك...</div>
+    <button class="code-close-btn" onclick="closeCodeOv()">إلغاء</button>
   </div>
 </div>
 
@@ -1621,16 +1839,16 @@ async function generate(){
 
     if(!r.ok){
       const e=await r.json().catch(()=>({error:r.statusText}));
-      throw new Error(e.error||'Server error');
+      throw new Error(e.error ? '❌ ' + e.error + (e.stages ? ' [' + e.stages.join('→') + ']' : '') : 'Server error');
     }
     // ── base64 JSON response (يتجاوز مشكلة Render proxy مع binary streams) ──
     const json=await r.json();
-    if(!json.ok) throw new Error(json.error||'استجابة غير صالحة من الخادم');
-    // v18: redirect to preview page instead of direct download
-    setP(100,t('modal_ok'));await sl(400);
+    if(!json.ok || !json.data) throw new Error(json.error||'استجابة غير صالحة من الخادم');
+    const isFallback = false; // v17: single unified engine, no fallbacks
+    // تحويل base64 → Blob (للمعاينة فقط — ملف PPTX الحقيقي على الخادم)
+    setP(100,t('modal_ok'));await sl(300);
+    showOk(json.data,d.studentName,false,json.filename,json.presentation_id,json.degree||d.degree||'licence',json.title_ar||d.titleAr||'',json.preview_slides||[]);
     localStorage.removeItem('mp_v4');
-    // Redirect to preview
-    window.location.href = json.preview_url;
   }catch(e){
     clearTimeout(_timeoutId);
     _progStop=true;
@@ -1669,31 +1887,307 @@ function cancelGen(){
   closeM();
 }
 function setP(p,m){document.getElementById('pfill').style.width=p+'%';document.getElementById('plbl').textContent=m||p+'%';}
-function showOk(url,name,isFallback,serverFilename){
-  document.getElementById('mic').className='mic mok';document.getElementById('mic').textContent='✅';
-  document.getElementById('mtitle').textContent=t('modal_ok');
-  document.getElementById('msub').textContent=t('modal_ok_sub');
-  document.getElementById('ptrack').style.display='none';document.getElementById('plbl').style.display='none';
-  document.getElementById('bcancel').style.display='none';
-  const mb=document.querySelector('.mbox');
-  mb.querySelectorAll('.bdl,.bnew,.fallback-note').forEach(e=>e.remove());
-  // تنبيه Fallback
-  if(isFallback){
-    const note=document.createElement('p');note.className='fallback-note';
-    const msgs={ar:'ℹ️ تم استخدام محرك Canva بدلاً من Premium (Node.js غير متاح على الخادم)',fr:'ℹ️ Moteur Canva utilisé à la place de Premium (Node.js absent)',en:'ℹ️ Canva engine used instead of Premium (Node.js unavailable)'};
-    note.textContent=msgs[currentLang]||msgs.ar;
-    mb.appendChild(note);
+// ══ PAYMENT STATE ══
+let _currentPresId = null;
+let _currentB64 = null;
+let _currentFilename = null;
+let _currentStudentName = null;
+let _currentDegree = null;
+let _currentTitleAr = null;
+let _currentOrderId = null;
+let _selectedMethod = null;
+let _receiptFile = null;
+let _previewSlideIdx = 0;
+
+function showOk(b64Data, name, isFallback, serverFilename, presId, degree, titleAr, inlineSlides){
+  _currentPresId = presId;
+  _currentB64 = b64Data;
+  _currentFilename = serverFilename || 'presentation.pptx';
+  _currentStudentName = name;
+  _currentDegree = degree || 'licence';
+  _currentTitleAr = titleAr || '';
+  _previewSlideIdx = 0;
+  _previewSlides = [];
+  closeM();
+  showLockedPreviewBanner();
+  // عرض PPTX الحقيقي مباشرة في المتصفح
+  renderPptxPreview(b64Data);
+}
+
+function showLockedPreviewBanner(){
+  let existing = document.getElementById('resultBanner');
+  if(existing) existing.remove();
+  const banner = document.createElement('div');
+  banner.id = 'resultBanner';
+  banner.style.cssText = 'margin-top:20px;animation:fu .3s ease';
+  banner.innerHTML = `
+    <div class="preview-lock">
+      <div class="pl-icon">🔒</div>
+      <div class="pl-text">
+        <h4>العرض جاهز — محمي حتى الدفع</h4>
+        <p>أدّ 800 دج للحصول على ملف PPTX الكامل القابل للتعديل</p>
+      </div>
+      <div class="pl-actions">
+        <button class="pl-pay-btn" onclick="openPayOv()">💳 اشتري الآن — 800 دج</button>
+        <button class="pl-code-btn" onclick="openCodeOv()">🔑 عندي كود</button>
+      </div>
+    </div>
+    <div style="position:relative;margin-top:14px;border-radius:14px;overflow:hidden;background:#0a0f1e;box-shadow:0 4px 32px rgba(0,0,0,.4)">
+      <div id="pptx-preview-root" style="width:100%;min-height:400px;background:#0a0f1e;position:relative"></div>
+      <div id="pptx-loading" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;color:rgba(255,255,255,.7);background:#0a0f1e;z-index:5">
+        <div style="font-size:36px;margin-bottom:12px;animation:mspin 1.5s linear infinite;display:inline-block">⚙️</div>
+        <div style="font-size:14px">جاري تحميل معاينة العرض...</div>
+      </div>
+      <!-- طبقة حماية: تمنع النقر اليمين والسحب والاختيار -->
+      <div id="preview-shield"
+        style="position:absolute;inset:0;z-index:50;cursor:default"
+        oncontextmenu="return false"
+        onselectstart="return false"
+        ondragstart="return false">
+        <!-- علامة مائية -->
+        <div style="position:absolute;inset:0;display:flex;flex-direction:column;justify-content:space-around;align-items:center;pointer-events:none;overflow:hidden">
+          ${[...Array(4)].map((_,i)=>\`<div style="transform:rotate(-30deg);font-size:clamp(16px,3vw,28px);font-weight:900;color:rgba(255,255,255,0.12);white-space:nowrap;letter-spacing:4px;font-family:Cairo,sans-serif">مذكرتي Pro — معاينة فقط &nbsp;&nbsp;&nbsp; مذكرتي Pro — معاينة فقط</div>\`).join('')}
+        </div>
+      </div>
+      <!-- تنقل بين الشرائح -->
+      <div class="preview-nav" style="position:relative;z-index:100">
+        <button class="pn-btn" id="prevSlideBtn" onclick="pptxPrev()" disabled>&#8594; السابقة</button>
+        <span class="pn-counter" id="slideCounter">جاري التحميل...</span>
+        <button class="pn-btn" id="nextSlideBtn" onclick="pptxNext()" disabled>التالية &#8592;</button>
+      </div>
+    </div>
+    <button class="bnew" style="margin-top:10px" onclick="if(confirm('سيتم حذف العرض الحالي وإنشاء عرض جديد.')){localStorage.removeItem('mp_v4');location.reload()}">🔄 إنشاء عرض جديد</button>
+  `;
+  const bgen = document.getElementById('bgen');
+  if(bgen && bgen.parentNode) bgen.parentNode.insertBefore(banner, bgen.nextSibling);
+  else document.querySelector('.main').appendChild(banner);
+  setTimeout(()=>banner.scrollIntoView({behavior:'smooth',block:'center'}), 150);
+}
+
+// ── pptxjs renderer ──────────────────────────────────────────────────────────
+let _pptxSlideCount = 0;
+let _pptxCurrentSlide = 1;
+
+function renderPptxPreview(b64Data){
+  // تحويل base64 → ArrayBuffer
+  const binary = atob(b64Data);
+  const bytes = new Uint8Array(binary.length);
+  for(let i=0;i<binary.length;i++) bytes[i]=binary.charCodeAt(i);
+  const blob = new Blob([bytes], {type:'application/vnd.openxmlformats-officedocument.presentationml.presentation'});
+  const url = URL.createObjectURL(blob);
+
+  // استخدام pptxjs لعرض الشريحة
+  const root = document.getElementById('pptx-preview-root');
+  const loading = document.getElementById('pptx-loading');
+  if(!root) return;
+
+  root.innerHTML = '<div id="pptx-slides-wrap"></div>';
+
+  try{
+    $("#pptx-slides-wrap").pptxToHtml({
+      pptxFileUrl: url,
+      slideMode: false,
+      keyBoardShortCut: false,
+      slidesScale: "100%",
+      slideTop: 0,
+      slideLeft: 0,
+      success: function(total){
+        _pptxSlideCount = total;
+        _pptxCurrentSlide = 1;
+        if(loading) loading.style.display='none';
+        // إخفاء كل الشرائح ما عدا الأولى
+        _pptxShowSlide(1);
+        const ctr = document.getElementById('slideCounter');
+        if(ctr) ctr.textContent = 'الشريحة 1 من '+total;
+        const next = document.getElementById('nextSlideBtn');
+        if(next) next.disabled = (total <= 1);
+        URL.revokeObjectURL(url);
+      },
+      error: function(err){
+        console.error('pptxjs error:', err);
+        if(loading) loading.innerHTML='<div style="color:rgba(255,200,100,.8);font-size:13px">⚠️ تعذّر تحميل المعاينة</div>';
+        URL.revokeObjectURL(url);
+      }
+    });
+  }catch(e){
+    console.error('pptxjs exception:',e);
+    if(loading) loading.innerHTML='<div style="color:rgba(255,200,100,.8);font-size:13px">⚠️ '+e.message+'</div>';
   }
-  const a=document.createElement('a');
-  // نستخدم اسم الملف من الخادم مباشرة إن وُجد، وإلا نبني واحداً آمناً
-  const safeName = (name||'presentation').replace(/[\s\u0600-\u06FF]/g,'_').replace(/__+/g,'_').replace(/^_|_$/g,'');
-  const dlName = serverFilename || `mathkarati_${safeName||'presentation'}.pptx`;
-  a.href=url;a.download=dlName;
-  a.className='bdl';a.textContent=t('download_btn');mb.appendChild(a);
-  // تنظيف الـ blob URL بعد النقر لتجنب memory leak
-  a.addEventListener('click',()=>setTimeout(()=>URL.revokeObjectURL(url),60000),{once:true});
-  const r=document.createElement('button');r.className='bnew';r.textContent=t('new_btn');
-  r.onclick=()=>{localStorage.removeItem('mp_v4');location.reload();};mb.appendChild(r);
+}
+
+function _pptxShowSlide(n){
+  const wrap = document.getElementById('pptx-slides-wrap');
+  if(!wrap) return;
+  // pptxjs يولّد divs بـ id="pptx-slide-N"
+  for(let i=1;i<=_pptxSlideCount;i++){
+    const s = document.getElementById('pptx-slide-'+i) ||
+              wrap.querySelectorAll('[id*="slide"]')[i-1];
+    if(s) s.style.display = (i===n)?'block':'none';
+  }
+  const ctr = document.getElementById('slideCounter');
+  if(ctr) ctr.textContent = 'الشريحة '+n+' من '+_pptxSlideCount;
+  const prev = document.getElementById('prevSlideBtn');
+  const next = document.getElementById('nextSlideBtn');
+  if(prev) prev.disabled = n<=1;
+  if(next) next.disabled = n>=_pptxSlideCount;
+  _pptxCurrentSlide = n;
+}
+function pptxNext(){ if(_pptxCurrentSlide<_pptxSlideCount) _pptxShowSlide(_pptxCurrentSlide+1); }
+function pptxPrev(){ if(_pptxCurrentSlide>1) _pptxShowSlide(_pptxCurrentSlide-1); }
+
+async function loadRealPreview(presId, attempt){
+  attempt = attempt || 1;
+  const MAX_ATTEMPTS = 20;   // 20 × 3s = 60s max wait
+  const RETRY_MS    = 3000;
+
+  // تحديث رسالة الانتظار بمؤشر تقدم
+  const msg = document.getElementById('previewLoadingMsg');
+  if(msg && attempt > 1){
+    const dots = '.'.repeat((attempt % 4));
+    msg.innerHTML = `<div style="font-size:32px;margin-bottom:10px;animation:mspin 1.5s linear infinite;display:inline-block">⚙️</div>
+      <div style="font-size:13px">جاري تجهيز معاينة الشرائح${dots}</div>
+      <div style="font-size:11px;color:rgba(255,255,255,.4);margin-top:6px">قد يستغرق حتى دقيقة للمرة الأولى</div>`;
+  }
+
+  try{
+    const resp = await fetch('/preview/'+presId);
+    const data = await resp.json();
+    if(!data.ok || !data.slides || !data.slides.length) throw new Error('not ready');
+    _previewSlides = data.slides;
+    _previewSlideIdx = 0;
+    showPreviewSlide(0);
+    if(msg) msg.style.display='none';
+  }catch(e){
+    if(attempt < MAX_ATTEMPTS){
+      // إعادة المحاولة تلقائياً
+      setTimeout(()=>loadRealPreview(presId, attempt+1), RETRY_MS);
+    } else {
+      // فشل نهائي بعد كل المحاولات
+      if(msg) msg.innerHTML = '<div style="font-size:13px;color:rgba(255,200,100,.8)">⚠️ تعذّر تحميل المعاينة — يمكنك المتابعة للشراء</div>';
+      console.warn('Preview load failed after', attempt, 'attempts:', e);
+    }
+  }
+}
+
+function showPreviewSlide(idx){
+  if(!_previewSlides.length) return;
+  idx = Math.max(0, Math.min(idx, _previewSlides.length-1));
+  _previewSlideIdx = idx;
+  const img = document.getElementById('previewImg');
+  const loading = document.getElementById('previewLoadingMsg');
+  if(img){
+    img.src = 'data:image/jpeg;base64,' + _previewSlides[idx];
+    img.style.display = 'block';
+    if(loading) loading.style.display = 'none';
+  }
+  const total = _previewSlides.length;
+  const ctr = document.getElementById('slideCounter');
+  if(ctr) ctr.textContent = 'الشريحة '+(idx+1)+' من '+total;
+  const prev = document.getElementById('prevSlideBtn');
+  const next = document.getElementById('nextSlideBtn');
+  if(prev) prev.disabled = idx <= 0;
+  if(next) next.disabled = idx >= total-1;
+}
+function previewNext(){ showPreviewSlide(_previewSlideIdx+1); }
+function previewPrev(){ showPreviewSlide(_previewSlideIdx-1); }
+
+// ══ PAYMENT OVERLAY ══
+const CCP_INFO=`<div class="pi-row"><span class="pi-label">رقم الحساب CCP</span><span class="pi-val">000 12345678</span></div><div class="pi-row"><span class="pi-label">المفتاح / Clé</span><span class="pi-val">67</span></div><div class="pi-row"><span class="pi-label">اسم المستفيد</span><span class="pi-val">مذكرتي Pro</span></div><div class="pi-row"><span class="pi-label">المبلغ</span><span class="pi-val">800 دج</span></div>`;
+const BARID_INFO=`<div class="pi-row"><span class="pi-label">رقم BaridiMob</span><span class="pi-val">0799 000 000</span></div><div class="pi-row"><span class="pi-label">اسم المستفيد</span><span class="pi-val">مذكرتي Pro</span></div><div class="pi-row"><span class="pi-label">المبلغ</span><span class="pi-val">800 دج</span></div>`;
+
+function openPayOv(){
+  if(!_currentPresId){alert('يجب إنشاء العرض أولاً');return;}
+  document.getElementById('payOv').classList.add('open');
+  document.body.style.overflow='hidden';
+  const n=document.getElementById('pay-name');
+  if(n&&!n.value&&_currentStudentName) n.value=_currentStudentName;
+}
+function closePayOv(){document.getElementById('payOv').classList.remove('open');document.body.style.overflow='';}
+function openCodeOv(){document.getElementById('codeOv').classList.add('open');document.body.style.overflow='hidden';setTimeout(()=>document.getElementById('codeInput').focus(),100);}
+function closeCodeOv(){document.getElementById('codeOv').classList.remove('open');document.body.style.overflow='';}
+
+function selectMethod(method){
+  _selectedMethod=method;
+  document.querySelectorAll('.pm-card').forEach(c=>c.classList.remove('sel'));
+  document.getElementById('pm-'+method).classList.add('sel');
+  const box=document.getElementById('payInfoBox'), content=document.getElementById('payInfoContent');
+  box.style.display='block'; content.innerHTML=method==='ccp'?CCP_INFO:BARID_INFO;
+}
+function payGoStep2(){
+  if(!_selectedMethod){alert('اختر طريقة الدفع');return;}
+  if(!document.getElementById('pay-name').value.trim()){alert('الاسم الكامل مطلوب');return;}
+  document.getElementById('payStep1').style.display='none';
+  document.getElementById('payStep2').style.display='';
+  document.getElementById('ps1').className='ps-step done';
+  document.getElementById('ps2').className='ps-step act';
+}
+function payGoBack(){
+  document.getElementById('payStep1').style.display='';
+  document.getElementById('payStep2').style.display='none';
+  document.getElementById('ps1').className='ps-step act';
+  document.getElementById('ps2').className='ps-step';
+}
+function onReceiptSelect(input){
+  const file=input.files[0]; if(!file) return;
+  _receiptFile=file;
+  document.getElementById('previewName').textContent=file.name;
+  document.getElementById('previewSize').textContent=(file.size/1024).toFixed(1)+' KB';
+  document.getElementById('previewIcon').textContent=file.type.includes('pdf')?'📄':'🖼️';
+  document.getElementById('uploadPreview').style.display='flex';
+}
+function removeReceipt(){_receiptFile=null;document.getElementById('receiptFile').value='';document.getElementById('uploadPreview').style.display='none';}
+
+async function submitOrder(){
+  if(!_receiptFile){alert('يجب رفع وصل التسديد');return;}
+  const name=document.getElementById('pay-name').value.trim();
+  const email=document.getElementById('pay-email').value.trim();
+  const phone=document.getElementById('pay-phone').value.trim();
+  if(!name){alert('الاسم الكامل مطلوب');return;}
+  const btn=document.getElementById('paySubmitBtn');
+  btn.disabled=true; btn.textContent='⏳ جاري الإرسال...';
+  try{
+    const orderResp=await fetch('/orders',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({presentation_id:_currentPresId,student_name:name,email,phone,degree:_currentDegree,title_ar:_currentTitleAr,payment_method:_selectedMethod})});
+    const orderData=await orderResp.json();
+    if(!orderData.ok) throw new Error(orderData.error||'فشل في إنشاء الطلب');
+    _currentOrderId=orderData.order_id;
+    const fd=new FormData(); fd.append('receipt',_receiptFile);
+    const uploadResp=await fetch('/orders/'+_currentOrderId+'/receipt',{method:'POST',body:fd});
+    const uploadData=await uploadResp.json();
+    if(!uploadData.ok) throw new Error(uploadData.error||'فشل في رفع الوصل');
+    document.getElementById('payStep2').style.display='none';
+    document.getElementById('payStep3').style.display='';
+    document.getElementById('ps2').className='ps-step done';
+    document.getElementById('ps3').className='ps-step act';
+    document.getElementById('orderIdDisplay').textContent=_currentOrderId;
+  }catch(e){
+    alert('❌ '+e.message);
+    btn.disabled=false; btn.textContent='📤 إرسال الطلب';
+  }
+}
+
+async function redeemCode(){
+  const code=document.getElementById('codeInput').value.trim().toUpperCase();
+  const errEl=document.getElementById('codeErr');
+  if(code.length<6){errEl.style.display='block';errEl.textContent='❌ الكود يجب أن يكون 8 أحرف';return;}
+  const btn=document.querySelector('.code-btn');
+  btn.disabled=true; btn.textContent='⏳'; errEl.style.display='none';
+  try{
+    const resp=await fetch('/redeem',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code})});
+    const data=await resp.json();
+    if(!data.ok) throw new Error(data.error||'كود غير صحيح');
+    document.getElementById('codeSuccess').style.display='block';
+    const raw=atob(data.data), bytes=new Uint8Array(raw.length);
+    for(let i=0;i<raw.length;i++) bytes[i]=raw.charCodeAt(i);
+    const blob=new Blob([bytes],{type:'application/vnd.openxmlformats-officedocument.presentationml.presentation'});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a'); a.href=url; a.download=data.filename||'mathkarati.pptx';
+    document.body.appendChild(a); a.click();
+    setTimeout(()=>{URL.revokeObjectURL(url);a.remove();},5000);
+    setTimeout(()=>closeCodeOv(),2500);
+  }catch(e){
+    errEl.style.display='block'; errEl.textContent='❌ '+e.message;
+    btn.disabled=false; btn.textContent='✓ تحقق';
+  }
 }
 const sl=ms=>new Promise(r=>setTimeout(r,ms));
 

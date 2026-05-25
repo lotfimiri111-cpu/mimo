@@ -1,223 +1,369 @@
 """
-Preview Engine — مذكرتي Pro v18 Commercial
-PPTX → PDF → JPG images with watermark protection.
-Images are cached per order for performance.
+core/preview.py v3 — معاينة PPTX حقيقية بدون LibreOffice
+يستخدم python-pptx لقراءة كل عناصر الشريحة ويحوّلها إلى صورة JPEG دقيقة بـ Pillow.
 """
-from __future__ import annotations
-
+import base64
 import io
 import logging
-import os
-import subprocess
-import tempfile
-import time
+import threading
 from pathlib import Path
-from typing import Optional
-
-from PIL import Image, ImageDraw, ImageFont
+from typing import List, Optional, Tuple
 
 log = logging.getLogger(__name__)
 
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-CACHE_DIR = os.path.join(BASE_DIR, "storage", "preview_cache")
-STORAGE_DIR = os.path.join(BASE_DIR, "storage")
+_cache: dict = {}
+_cache_lock = threading.Lock()
+MAX_PREVIEW_SLIDES = 3
 
 
-def _ensure_dirs():
-    os.makedirs(CACHE_DIR, exist_ok=True)
+def get_cached_preview(presentation_id: str) -> Optional[List[str]]:
+    with _cache_lock:
+        return _cache.get(presentation_id)
 
 
-def _slide_cache_path(order_id: str, slide_n: int) -> str:
-    order_dir = os.path.join(CACHE_DIR, order_id)
-    os.makedirs(order_dir, exist_ok=True)
-    return os.path.join(order_dir, f"slide_{slide_n:02d}.jpg")
+def set_cached_preview(presentation_id: str, slides: List[str]) -> None:
+    with _cache_lock:
+        _cache[presentation_id] = slides
 
 
-def _thumb_cache_path(order_id: str, slide_n: int) -> str:
-    order_dir = os.path.join(CACHE_DIR, order_id)
-    os.makedirs(order_dir, exist_ok=True)
-    return os.path.join(order_dir, f"thumb_{slide_n:02d}.jpg")
-
-
-def _pdf_path(order_id: str) -> str:
-    return os.path.join(CACHE_DIR, order_id, "slides.pdf")
-
-
-def pptx_to_pdf(pptx_path: str, order_id: str) -> Optional[str]:
-    """Convert PPTX to PDF using LibreOffice. Returns PDF path or None."""
-    _ensure_dirs()
-    order_dir = os.path.join(CACHE_DIR, order_id)
-    os.makedirs(order_dir, exist_ok=True)
-    out_pdf = _pdf_path(order_id)
-
-    if os.path.exists(out_pdf):
-        return out_pdf  # cached
-
+def pptx_to_preview_images(pptx_path: str, watermark: bool = True) -> List[str]:
     try:
-        t0 = time.monotonic()
-        r = subprocess.run(
-            ["libreoffice", "--headless", "--convert-to", "pdf",
-             "--outdir", order_dir, pptx_path],
-            capture_output=True, text=True, timeout=120
-        )
-        if r.returncode != 0:
-            log.error(f"LibreOffice failed: {r.stderr[:300]}")
-            return None
+        slides = _render_pptx(pptx_path)
+        if watermark:
+            slides = [_add_watermark(s) for s in slides]
+        return slides
+    except Exception as exc:
+        log.warning(f"Preview render failed: {exc}", exc_info=True)
+        return []
 
-        # LibreOffice names it after the source file — rename to slides.pdf
-        pptx_name = os.path.splitext(os.path.basename(pptx_path))[0]
-        generated_pdf = os.path.join(order_dir, pptx_name + ".pdf")
-        if os.path.exists(generated_pdf) and generated_pdf != out_pdf:
-            os.rename(generated_pdf, out_pdf)
 
-        if not os.path.exists(out_pdf):
-            log.error("PDF not created after conversion")
-            return None
+# ─── EMU helpers ──────────────────────────────────────────────────────────────
+EMU = 914400.0
+SCALE = 96 / EMU   # EMU → px at 96dpi
 
-        log.info(f"PDF created: {out_pdf} ({os.path.getsize(out_pdf):,}B) in {time.monotonic()-t0:.1f}s")
-        return out_pdf
-    except Exception as e:
-        log.error(f"pptx_to_pdf error: {e}", exc_info=True)
+
+def _px(emu) -> int:
+    return int((emu or 0) * SCALE)
+
+
+def _rgb_from_pptx(color_obj) -> Optional[Tuple[int,int,int]]:
+    try:
+        rgb = color_obj.rgb
+        return (rgb.r, rgb.g, rgb.b)
+    except Exception:
         return None
 
 
-def _add_watermark(img: Image.Image, text: str = "مذكرتي Pro — للمعاينة فقط") -> Image.Image:
-    """Add a subtle diagonal watermark."""
-    overlay = Image.new("RGBA", img.size, (0, 0, 0, 0))
+def _hex_to_rgb(h: str) -> Tuple[int,int,int]:
+    h = h.lstrip("#")
+    return tuple(int(h[i:i+2], 16) for i in (0, 2, 4))
+
+
+# ─── Main renderer ────────────────────────────────────────────────────────────
+def _render_pptx(pptx_path: str) -> List[str]:
+    from pptx import Presentation
+    from pptx.enum.dml import MSO_THEME_COLOR
+    from PIL import Image
+
+    prs = Presentation(pptx_path)
+    W = max(960, _px(prs.slide_width))
+    H = max(540, _px(prs.slide_height))
+
+    results = []
+    for slide in list(prs.slides)[:MAX_PREVIEW_SLIDES]:
+        img = _draw_slide(slide, W, H)
+        buf = io.BytesIO()
+        img.save(buf, format="JPEG", quality=88, optimize=True)
+        results.append(base64.b64encode(buf.getvalue()).decode("ascii"))
+    return results
+
+
+def _draw_slide(slide, W: int, H: int):
+    from PIL import Image, ImageDraw
+    from pptx.util import Pt
+    from pptx.enum.shapes import MSO_SHAPE_TYPE
+
+    # 1) خلفية الشريحة
+    img = _draw_background(slide, W, H)
+    draw = ImageDraw.Draw(img)
+
+    # 2) ارسم كل شكل بالترتيب
+    for shape in slide.shapes:
+        try:
+            _draw_shape(img, draw, shape, W, H)
+        except Exception as e:
+            log.debug(f"Shape render skip: {e}")
+
+    return img
+
+
+def _draw_background(slide, W: int, H: int):
+    from PIL import Image, ImageDraw
+    from pptx.dml.color import RGBColor
+
+    bg_color = (255, 255, 255)
+    try:
+        bg = slide.background
+        fill = bg.fill
+        ftype = fill.type
+        if ftype is not None:
+            c = _rgb_from_pptx(fill.fore_color)
+            if c:
+                bg_color = c
+    except Exception:
+        pass
+
+    img = Image.new("RGB", (W, H), bg_color)
+
+    # gradient إذا كان محدداً (نحاكيه بشكل بسيط)
+    # نقرأ الـ XML للحصول على gradient stops
+    try:
+        from pptx.oxml.ns import qn
+        from lxml import etree
+        import re
+
+        bg_elem = slide.background._element
+        grad_fill = bg_elem.find('.//' + qn('a:gradFill'))
+        if grad_fill is not None:
+            stops = []
+            for gs in grad_fill.findall('.//' + qn('a:gs')):
+                pos = int(gs.get('pos', '0')) / 100000
+                srgb = gs.find('.//' + qn('a:srgbClr'))
+                if srgb is not None:
+                    val = srgb.get('val', 'FFFFFF')
+                    stops.append((pos, _hex_to_rgb(val)))
+            if len(stops) >= 2:
+                img = _draw_gradient(W, H, stops)
+    except Exception:
+        pass
+
+    return img
+
+
+def _draw_gradient(W: int, H: int, stops: list):
+    """يرسم gradient عمودي بين عدة ألوان."""
+    from PIL import Image
+    import numpy as np
+
+    arr = np.zeros((H, W, 3), dtype=np.uint8)
+    stops_sorted = sorted(stops, key=lambda x: x[0])
+
+    for y in range(H):
+        t = y / H
+        # إيجاد الـ stop المناسب
+        c1 = stops_sorted[0][1]
+        c2 = stops_sorted[-1][1]
+        for i in range(len(stops_sorted)-1):
+            p0, col0 = stops_sorted[i]
+            p1, col1 = stops_sorted[i+1]
+            if p0 <= t <= p1:
+                if p1 - p0 < 0.001:
+                    local = 0
+                else:
+                    local = (t - p0) / (p1 - p0)
+                c1 = tuple(int(col0[j] + (col1[j] - col0[j]) * local) for j in range(3))
+                c2 = c1
+                break
+        arr[y, :] = c1
+
+    return Image.fromarray(arr, "RGB")
+
+
+def _draw_shape(img, draw, shape, W: int, H: int):
+    from pptx.enum.shapes import MSO_SHAPE_TYPE
+    from PIL import Image
+
+    left   = _px(shape.left)
+    top    = _px(shape.top)
+    width  = _px(shape.width)
+    height = _px(shape.height)
+
+    # ── رسم خلفية الشكل ──────────────────────────────────────────────
+    try:
+        fill = shape.fill
+        ftype = fill.type
+        if ftype is not None and width > 0 and height > 0:
+            fc = _rgb_from_pptx(fill.fore_color)
+            if fc:
+                # شكل مستطيل أو مدوّر
+                _draw_rect_shape(img, draw, shape, left, top, width, height, fc)
+    except Exception:
+        pass
+
+    # ── رسم النص ─────────────────────────────────────────────────────
+    if shape.has_text_frame:
+        _draw_text_frame(img, draw, shape, left, top, width, height)
+
+
+def _draw_rect_shape(img, draw, shape, left, top, width, height, fill_color):
+    from PIL import Image, ImageDraw
+    from pptx.enum.shapes import MSO_SHAPE_TYPE
+
+    # تحقق نوع الشكل للحواف المدوّرة
+    try:
+        shape_type = shape.shape_type
+        # oval/ellipse
+        if shape_type == MSO_SHAPE_TYPE.FREEFORM or \
+           (hasattr(shape, 'auto_shape_type') and 'OVAL' in str(shape.auto_shape_type)):
+            draw.ellipse([left, top, left+width, top+height], fill=fill_color)
+            return
+    except Exception:
+        pass
+
+    draw.rectangle([left, top, left+width, top+height], fill=fill_color)
+
+
+def _draw_text_frame(img, draw, shape, left, top, width, height):
+    from PIL import ImageFont
+    from pptx.enum.text import PP_ALIGN
+
+    tf = shape.text_frame
+    y_cursor = top + 6
+
+    for para in tf.paragraphs:
+        if not para.text.strip():
+            y_cursor += 8
+            continue
+
+        # حجم الخط ولونه من أول run
+        fsize = 14
+        fcolor = (30, 30, 30)
+        bold = False
+        for run in para.runs:
+            try:
+                if run.font.size:
+                    fsize = max(7, min(int(run.font.size / 12700), 72))
+                if run.font.bold:
+                    bold = True
+                c = _rgb_from_pptx(run.font.color)
+                if c:
+                    fcolor = c
+            except Exception:
+                pass
+            break
+
+        # اختر خط مناسب
+        font = _get_font(fsize, bold)
+
+        text = para.text.strip()
+        if not text:
+            continue
+
+        # محاذاة
+        try:
+            align = para.alignment
+        except Exception:
+            align = None
+
+        # اقتصاص النص إذا كان طويلاً
+        text = _wrap_text(text, font, width - 12)
+
+        # x بحسب المحاذاة
+        x = left + 6
+        if align == PP_ALIGN.CENTER:
+            x = left + width // 2 - _text_width(text.split('\n')[0], font) // 2
+        elif align == PP_ALIGN.RIGHT or align is None:
+            # العربية RTL — نضع النص على اليمين
+            x = left + width - _text_width(text.split('\n')[0], font) - 6
+
+        draw.text((x, y_cursor), text, fill=fcolor, font=font)
+        lines = text.count('\n') + 1
+        y_cursor += (fsize + 4) * lines
+
+        if y_cursor > top + height:
+            break
+
+
+def _get_font(size: int, bold: bool = False):
+    from PIL import ImageFont
+
+    paths = [
+        "/home/user/.fonts/cairo/Cairo.ttf",
+        "/root/.fonts/cairo/Cairo.ttf",
+        "/usr/share/fonts/truetype/cairo/Cairo.ttf",
+        "/tmp/fonts/cairo/Cairo.ttf",
+        "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf" if bold else "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+        "/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf" if bold else "/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf",
+        "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+    ]
+    for p in paths:
+        try:
+            return ImageFont.truetype(p, size)
+        except Exception:
+            continue
+    return ImageFont.load_default()
+
+
+def _text_width(text: str, font) -> int:
+    try:
+        from PIL import Image, ImageDraw
+        tmp = ImageDraw.Draw(Image.new("RGB", (1, 1)))
+        bbox = tmp.textbbox((0, 0), text, font=font)
+        return bbox[2] - bbox[0]
+    except Exception:
+        return len(text) * 8
+
+
+def _wrap_text(text: str, font, max_width: int) -> str:
+    if max_width <= 0:
+        return text
+    words = text.split()
+    lines = []
+    current = ""
+    for word in words:
+        test = (current + " " + word).strip()
+        if _text_width(test, font) <= max_width:
+            current = test
+        else:
+            if current:
+                lines.append(current)
+            current = word
+    if current:
+        lines.append(current)
+    return "\n".join(lines) if lines else text
+
+
+# ─── Watermark ────────────────────────────────────────────────────────────────
+def _add_watermark(b64_jpeg: str) -> str:
+    import os
+    from PIL import Image, ImageDraw, ImageFont
+
+    data = base64.b64decode(b64_jpeg)
+    img = Image.open(io.BytesIO(data)).convert("RGBA")
+    W, H = img.size
+
+    overlay = Image.new("RGBA", (W, H), (0, 0, 0, 0))
     draw = ImageDraw.Draw(overlay)
 
-    # Use a built-in font (no external font needed)
+    font_size = max(24, W // 24)
+    font = _get_font(font_size, bold=True)
+    text = "مذكرتي Pro — معاينة فقط"
+
+    # قياس النص
     try:
-        font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 28)
+        tmp_draw = ImageDraw.Draw(Image.new("RGBA", (1,1)))
+        bbox = tmp_draw.textbbox((0,0), text, font=font)
+        tw = bbox[2] - bbox[0]
+        th = bbox[3] - bbox[1]
     except Exception:
-        font = ImageFont.load_default()
+        tw, th = font_size * 15, font_size + 4
 
-    w, h = img.size
-    # Draw watermark pattern diagonally
-    for x in range(-w, w * 2, 320):
-        for y in range(-h, h * 2, 180):
-            draw.text((x, y), text, fill=(255, 255, 255, 28), font=font)
+    # إنشاء طبقة للعلامة المائية المدوّرة
+    txt_layer = Image.new("RGBA", (tw + 40, th + 20), (0,0,0,0))
+    td = ImageDraw.Draw(txt_layer)
+    td.text((20, 10), text, fill=(255,255,255,80), font=font)
+    rotated = txt_layer.rotate(-30, expand=True)
 
-    # Convert base image to RGBA for compositing
-    if img.mode != "RGBA":
-        img = img.convert("RGBA")
-    watermarked = Image.alpha_composite(img, overlay)
-    return watermarked.convert("RGB")
+    # توزيع العلامة المائية بشكل شبكي
+    step_x = max(rotated.width + 40, W // 3)
+    step_y = max(rotated.height + 30, H // 3)
+    for row in range(-1, H // step_y + 2):
+        for col in range(-1, W // step_x + 2):
+            x = col * step_x - rotated.width // 2
+            y = row * step_y - rotated.height // 2
+            overlay.paste(rotated, (x, y), rotated)
 
-
-def render_slide(pptx_path: str, order_id: str, slide_n: int,
-                 watermark: bool = True) -> Optional[bytes]:
-    """
-    Render slide N (1-based) as JPEG bytes.
-    Returns None if not available.
-    """
-    _ensure_dirs()
-    cache_path = _slide_cache_path(order_id, slide_n)
-
-    # Return from cache if exists
-    if os.path.exists(cache_path):
-        with open(cache_path, "rb") as f:
-            return f.read()
-
-    # Need PDF first
-    pdf_path = _pdf_path(order_id)
-    if not os.path.exists(pdf_path):
-        pdf_path = pptx_to_pdf(pptx_path, order_id)
-        if not pdf_path:
-            return None
-
-    try:
-        from pdf2image import convert_from_path
-        # Render only the specific page (1-based in pdf2image)
-        pages = convert_from_path(
-            pdf_path,
-            dpi=150,
-            first_page=slide_n,
-            last_page=slide_n,
-            fmt="jpeg",
-            thread_count=1,
-        )
-        if not pages:
-            return None
-
-        img = pages[0]
-        if watermark:
-            img = _add_watermark(img)
-
-        # Save to cache
-        img.save(cache_path, "JPEG", quality=88, optimize=True)
-
-        with open(cache_path, "rb") as f:
-            return f.read()
-    except Exception as e:
-        log.error(f"render_slide error: slide={slide_n} {e}", exc_info=True)
-        return None
-
-
-def render_thumbnail(pptx_path: str, order_id: str, slide_n: int) -> Optional[bytes]:
-    """Render small thumbnail (300px wide) for the sidebar."""
-    _ensure_dirs()
-    cache_path = _thumb_cache_path(order_id, slide_n)
-
-    if os.path.exists(cache_path):
-        with open(cache_path, "rb") as f:
-            return f.read()
-
-    # Get full slide first
-    full_bytes = render_slide(pptx_path, order_id, slide_n, watermark=False)
-    if not full_bytes:
-        return None
-
-    try:
-        img = Image.open(io.BytesIO(full_bytes))
-        # Resize to thumbnail
-        w, h = img.size
-        thumb_w = 300
-        thumb_h = int(h * thumb_w / w)
-        thumb = img.resize((thumb_w, thumb_h), Image.LANCZOS)
-
-        buf = io.BytesIO()
-        thumb.save(buf, "JPEG", quality=75)
-        data = buf.getvalue()
-
-        with open(cache_path, "wb") as f:
-            f.write(data)
-        return data
-    except Exception as e:
-        log.error(f"thumbnail error: {e}")
-        return None
-
-
-def get_slide_count_from_pdf(order_id: str) -> int:
-    """Get number of slides from cached PDF."""
-    pdf_path = _pdf_path(order_id)
-    if not os.path.exists(pdf_path):
-        return 0
-    try:
-        from pdf2image import pdfinfo_from_path
-        info = pdfinfo_from_path(pdf_path)
-        return info.get("Pages", 0)
-    except Exception:
-        return 0
-
-
-def prerender_all(pptx_path: str, order_id: str, slide_count: int):
-    """Background pre-render all slides for fast access."""
-    try:
-        pdf_path = pptx_to_pdf(pptx_path, order_id)
-        if not pdf_path:
-            return
-        log.info(f"Pre-rendering {slide_count} slides for order {order_id[:8]}...")
-        for n in range(1, slide_count + 1):
-            render_thumbnail(pptx_path, order_id, n)
-        log.info(f"Pre-render complete for {order_id[:8]}")
-    except Exception as e:
-        log.error(f"prerender_all error: {e}")
-
-
-def clear_cache(order_id: str):
-    """Delete cached preview images for an order."""
-    import shutil
-    order_dir = os.path.join(CACHE_DIR, order_id)
-    if os.path.exists(order_dir):
-        shutil.rmtree(order_dir)
+    combined = Image.alpha_composite(img, overlay).convert("RGB")
+    buf = io.BytesIO()
+    combined.save(buf, format="JPEG", quality=85, optimize=True)
+    return base64.b64encode(buf.getvalue()).decode("ascii")

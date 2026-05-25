@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>لوحة تحكم Admin — مذكرتي Pro</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --navy:#07172F;--navy-m:#0E274D;--gold:#C6A03C;--gold-l:#E8C97B;
+  --bg:#0A0F1E;--surface:#111827;--card:#1a2235;--border:#1e2d47;
+  --text:#E8EDF5;--muted:#64748B;--ok:#10B981;--err:#EF4444;--warn:#F59E0B;
+  --info:#3B82F6;--r:10px;--t:.18s ease;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Cairo',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;direction:rtl}
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:99px}
+
+/* ── LOGIN ── */
+#loginScreen{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:999}
+.login-box{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:40px 36px;width:360px;text-align:center;box-shadow:0 30px 80px rgba(0,0,0,.5)}
+.login-box .logo{width:60px;height:60px;background:linear-gradient(135deg,var(--gold),var(--gold-l));border-radius:14px;margin:0 auto 16px;display:flex;align-items:center;justify-content:center;font-size:28px}
+.login-box h2{font-size:20px;font-weight:900;margin-bottom:4px}
+.login-box p{font-size:12px;color:var(--muted);margin-bottom:24px}
+.login-box input{width:100%;padding:12px 14px;background:#0d1526;border:1.5px solid var(--border);border-radius:9px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:14px;margin-bottom:12px;direction:ltr;text-align:center;letter-spacing:2px}
+.login-box input:focus{outline:none;border-color:var(--gold)}
+.login-box button{width:100%;padding:13px;border-radius:9px;border:none;background:linear-gradient(135deg,var(--gold),var(--gold-l));color:var(--navy);font-family:'Cairo',sans-serif;font-size:14px;font-weight:800;cursor:pointer}
+.login-err{color:var(--err);font-size:12px;margin-top:8px;display:none}
+
+/* ── LAYOUT ── */
+#app{display:none}
+.sidebar{position:fixed;top:0;right:0;width:220px;height:100vh;background:var(--surface);border-left:1px solid var(--border);padding:20px 0;z-index:100;overflow-y:auto}
+.sb-logo{display:flex;align-items:center;gap:10px;padding:0 18px 20px;border-bottom:1px solid var(--border);margin-bottom:12px}
+.sb-logo .ic{width:36px;height:36px;background:linear-gradient(135deg,var(--gold),var(--gold-l));border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.sb-logo .tx h3{font-size:13px;font-weight:800;color:var(--text)}
+.sb-logo .tx p{font-size:10px;color:var(--muted)}
+.nav-item{display:flex;align-items:center;gap:9px;padding:10px 18px;cursor:pointer;border-radius:0;transition:all var(--t);font-size:13px;font-weight:600;color:var(--muted);border-right:3px solid transparent}
+.nav-item:hover{background:rgba(255,255,255,.04);color:var(--text)}
+.nav-item.active{background:rgba(198,160,60,.1);color:var(--gold);border-right-color:var(--gold)}
+.nav-item .ni{font-size:16px;width:20px;text-align:center}
+.nav-badge{margin-right:auto;background:var(--err);color:#fff;border-radius:99px;padding:1px 7px;font-size:10px;font-weight:700}
+.nav-badge.gold{background:var(--gold);color:var(--navy)}
+.sb-footer{padding:18px;border-top:1px solid var(--border);margin-top:auto}
+.logout-btn{width:100%;padding:9px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--muted);font-family:'Cairo',sans-serif;font-size:12px;cursor:pointer;transition:all var(--t)}
+.logout-btn:hover{border-color:var(--err);color:var(--err)}
+
+/* ── MAIN ── */
+.main-content{margin-right:220px;padding:24px;min-height:100vh}
+.page{display:none}
+.page.active{display:block;animation:fu .2s ease}
+@keyframes fu{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+.page-header{margin-bottom:22px}
+.page-header h1{font-size:22px;font-weight:900;color:var(--text)}
+.page-header p{font-size:12px;color:var(--muted);margin-top:3px}
+
+/* ── STATS CARDS ── */
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px}
+.stat-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:18px;position:relative;overflow:hidden}
+.stat-card::before{content:'';position:absolute;top:0;right:0;width:60px;height:60px;background:radial-gradient(circle,var(--accent,.15),transparent 70%);pointer-events:none}
+.stat-num{font-size:32px;font-weight:900;margin-bottom:4px;line-height:1}
+.stat-lbl{font-size:11px;color:var(--muted);font-weight:600}
+.stat-sub{font-size:10px;color:var(--muted);margin-top:6px}
+.stat-card.ok{--accent:rgba(16,185,129,.3)}
+.stat-card.warn{--accent:rgba(245,158,11,.3)}
+.stat-card.info{--accent:rgba(59,130,246,.3)}
+.stat-card.gold{--accent:rgba(198,160,60,.3)}
+
+/* ── TABLE ── */
+.table-wrap{background:var(--card);border:1px solid var(--border);border-radius:14px;overflow:hidden}
+.table-toolbar{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.table-toolbar h3{font-size:14px;font-weight:800}
+.filter-btns{display:flex;gap:6px;flex-wrap:wrap}
+.fb{padding:5px 12px;border-radius:7px;border:1px solid var(--border);background:transparent;color:var(--muted);font-family:'Cairo',sans-serif;font-size:11px;font-weight:700;cursor:pointer;transition:all var(--t)}
+.fb:hover{border-color:var(--gold);color:var(--gold)}
+.fb.act{background:var(--gold);color:var(--navy);border-color:var(--gold)}
+.tb-refresh{margin-right:auto;padding:6px 14px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--muted);font-family:'Cairo',sans-serif;font-size:11px;cursor:pointer;transition:all var(--t);display:flex;align-items:center;gap:5px}
+.tb-refresh:hover{border-color:var(--info);color:var(--info)}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{padding:10px 14px;text-align:right;font-weight:700;color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.5px;background:rgba(0,0,0,.2);border-bottom:1px solid var(--border)}
+td{padding:11px 14px;border-bottom:1px solid rgba(30,45,71,.5);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:rgba(255,255,255,.02)}
+.order-id{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--gold)}
+.badge{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:99px;font-size:10px;font-weight:700}
+.badge.pending{background:rgba(245,158,11,.15);color:var(--warn)}
+.badge.approved{background:rgba(16,185,129,.15);color:var(--ok)}
+.badge.rejected{background:rgba(239,68,68,.15);color:var(--err)}
+.badge.downloaded{background:rgba(59,130,246,.15);color:var(--info)}
+.method-badge{font-size:10px;padding:2px 7px;border-radius:6px;background:rgba(255,255,255,.07);color:var(--muted);font-family:'JetBrains Mono',monospace}
+.action-btns{display:flex;gap:5px}
+.act-btn{padding:5px 10px;border-radius:7px;border:none;font-family:'Cairo',sans-serif;font-size:10px;font-weight:700;cursor:pointer;transition:all var(--t)}
+.act-btn.view{background:rgba(59,130,246,.15);color:var(--info)}
+.act-btn.view:hover{background:var(--info);color:#fff}
+.act-btn.approve{background:rgba(16,185,129,.15);color:var(--ok)}
+.act-btn.approve:hover{background:var(--ok);color:#fff}
+.act-btn.reject{background:rgba(239,68,68,.15);color:var(--err)}
+.act-btn.reject:hover{background:var(--err);color:#fff}
+.act-btn.resend{background:rgba(198,160,60,.15);color:var(--gold)}
+.act-btn.resend:hover{background:var(--gold);color:var(--navy)}
+.empty-state{padding:40px;text-align:center;color:var(--muted);font-size:13px}
+
+/* ── ORDER DETAIL MODAL ── */
+.modal-ov{position:fixed;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(10px);display:none;align-items:center;justify-content:center;z-index:500;padding:16px}
+.modal-ov.open{display:flex}
+.modal-box{background:var(--surface);border:1px solid var(--border);border-radius:18px;width:100%;max-width:660px;max-height:90vh;overflow-y:auto;box-shadow:0 30px 80px rgba(0,0,0,.6);animation:fu .22s ease}
+.modal-head{padding:20px 22px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;position:sticky;top:0;background:var(--surface);z-index:2}
+.modal-head h3{font-size:16px;font-weight:800;flex:1}
+.modal-close{background:rgba(255,255,255,.07);border:none;border-radius:8px;padding:6px 12px;color:var(--muted);cursor:pointer;font-size:16px}
+.modal-close:hover{background:rgba(239,68,68,.2);color:var(--err)}
+.modal-body{padding:22px}
+.detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:18px}
+.detail-row{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px}
+.detail-row .dr-label{font-size:10px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
+.detail-row .dr-val{font-size:13px;font-weight:600}
+.detail-row .dr-val.mono{font-family:'JetBrains Mono',monospace;font-size:12px}
+.detail-row .dr-val.gold{color:var(--gold)}
+.detail-row .dr-val.ok{color:var(--ok)}
+.detail-row .dr-val.err{color:var(--err)}
+.receipt-preview{background:var(--card);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:16px}
+.receipt-preview-head{padding:10px 14px;font-size:12px;font-weight:700;display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--border)}
+.receipt-preview-img{max-width:100%;max-height:280px;object-fit:contain;display:block}
+.receipt-frame{width:100%;height:280px;border:none}
+.admin-note-area{width:100%;padding:10px 12px;background:var(--card);border:1.5px solid var(--border);border-radius:9px;color:var(--text);font-family:'Cairo',sans-serif;font-size:12px;resize:vertical;min-height:70px;margin-bottom:12px;direction:rtl}
+.admin-note-area:focus{outline:none;border-color:var(--gold)}
+.modal-actions{display:flex;gap:8px;flex-wrap:wrap}
+.ma-btn{flex:1;padding:11px;border-radius:9px;border:none;font-family:'Cairo',sans-serif;font-size:13px;font-weight:700;cursor:pointer;transition:all var(--t);min-width:100px}
+.ma-btn.approve{background:linear-gradient(135deg,var(--ok),#059669);color:#fff}
+.ma-btn.approve:hover{transform:translateY(-1px)}
+.ma-btn.reject{background:linear-gradient(135deg,var(--err),#DC2626);color:#fff}
+.ma-btn.reject:hover{transform:translateY(-1px)}
+.ma-btn.resend{background:linear-gradient(135deg,var(--gold),var(--gold-l));color:var(--navy)}
+.ma-btn.close{background:rgba(255,255,255,.07);color:var(--muted)}
+.code-display{background:var(--card);border:2px solid var(--ok);border-radius:12px;padding:16px;text-align:center;margin-bottom:14px}
+.code-display .cd-label{font-size:11px;color:var(--muted);margin-bottom:6px}
+.code-display .cd-code{font-family:'JetBrains Mono',monospace;font-size:28px;font-weight:800;color:var(--ok);letter-spacing:5px}
+.code-display .cd-expires{font-size:10px;color:var(--muted);margin-top:4px}
+.copy-btn{margin-top:8px;padding:6px 16px;border-radius:7px;border:1px solid var(--ok);background:transparent;color:var(--ok);font-family:'Cairo',sans-serif;font-size:11px;cursor:pointer}
+.copy-btn:hover{background:var(--ok);color:#fff}
+.audit-list{margin-top:16px}
+.audit-list h4{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px}
+.audit-item{display:flex;gap:10px;padding:8px 0;border-bottom:1px solid rgba(30,45,71,.5);font-size:11px}
+.audit-item:last-child{border:none}
+.ai-time{color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:10px;white-space:nowrap;min-width:120px}
+.ai-action{font-weight:700;color:var(--gold)}
+.ai-actor{color:var(--muted)}
+
+/* ── TOAST ── */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(10px);background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 20px;font-size:12px;font-weight:600;z-index:9999;opacity:0;transition:all .3s;pointer-events:none;white-space:nowrap}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.toast.ok{border-color:var(--ok);color:var(--ok)}
+.toast.err{border-color:var(--err);color:var(--err)}
+
+@media(max-width:900px){
+  .sidebar{width:60px;overflow:hidden}
+  .sb-logo .tx,.nav-item span:not(.ni),.nav-badge,.sb-footer .logout-btn span{display:none}
+  .nav-item{padding:12px;justify-content:center}
+  .main-content{margin-right:60px}
+  .stats-grid{grid-template-columns:1fr 1fr}
+  .detail-grid{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="loginScreen">
+  <div class="login-box">
+    <div class="logo">🎓</div>
+    <h2>لوحة الإدارة</h2>
+    <p>مذكرتي Pro — Admin Panel</p>
+    <input type="password" id="loginPass" placeholder="كلمة المرور" onkeydown="if(event.key==='Enter')doLogin()">
+    <button onclick="doLogin()">دخول →</button>
+    <div class="login-err" id="loginErr">❌ كلمة المرور غير صحيحة</div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sb-logo">
+      <div class="ic">🎓</div>
+      <div class="tx">
+        <h3>مذكرتي Pro</h3>
+        <p>Admin Panel</p>
+      </div>
+    </div>
+    <nav>
+      <div class="nav-item active" onclick="showPage('dashboard')"><span class="ni">📊</span><span>لوحة القيادة</span></div>
+      <div class="nav-item" onclick="showPage('orders')"><span class="ni">📋</span><span>الطلبات</span><span class="nav-badge" id="pendingBadge" style="display:none">0</span></div>
+      <div class="nav-item" onclick="showPage('approved')"><span class="ni">✅</span><span>المعتمدة</span></div>
+      <div class="nav-item" onclick="showPage('downloaded')"><span class="ni">⬇️</span><span>المحملة</span></div>
+      <div class="nav-item" onclick="showPage('rejected')"><span class="ni">❌</span><span>المرفوضة</span></div>
+    </nav>
+    <div style="position:absolute;bottom:0;right:0;left:0;padding:16px;border-top:1px solid var(--border)">
+      <button class="logout-btn" onclick="logout()">🚪 <span>تسجيل الخروج</span></button>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <main class="main-content">
+
+    <!-- Dashboard -->
+    <div class="page active" id="page-dashboard">
+      <div class="page-header">
+        <h1>📊 لوحة القيادة</h1>
+        <p id="lastRefresh">آخر تحديث: —</p>
+      </div>
+      <div class="stats-grid">
+        <div class="stat-card gold"><div class="stat-num" id="st-revenue">—</div><div class="stat-lbl">إجمالي الإيرادات (دج)</div><div class="stat-sub" id="st-total">— طلب</div></div>
+        <div class="stat-card warn"><div class="stat-num" id="st-pending">—</div><div class="stat-lbl">في انتظار المراجعة</div><div class="stat-sub">⚠️ تحتاج اتخاذ قرار</div></div>
+        <div class="stat-card ok"><div class="stat-num" id="st-approved">—</div><div class="stat-lbl">معتمدة / انتظار تحميل</div><div class="stat-sub">✅ تم إرسال الكود</div></div>
+        <div class="stat-card info"><div class="stat-num" id="st-downloaded">—</div><div class="stat-lbl">مكتملة / تم التحميل</div><div class="stat-sub" id="st-today">اليوم: —</div></div>
+      </div>
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px">
+        <h3 style="font-size:14px;font-weight:800;margin-bottom:14px">⏳ أحدث الطلبات المعلقة</h3>
+        <div id="dashPendingList"></div>
+      </div>
+    </div>
+
+    <!-- Orders pages (reuse same table with different filter) -->
+    <div class="page" id="page-orders"><div class="page-header"><h1>📋 جميع الطلبات</h1></div><div id="ordersTable"></div></div>
+    <div class="page" id="page-approved"><div class="page-header"><h1>✅ الطلبات المعتمدة</h1></div><div id="approvedTable"></div></div>
+    <div class="page" id="page-downloaded"><div class="page-header"><h1>⬇️ الطلبات المكتملة</h1></div><div id="downloadedTable"></div></div>
+    <div class="page" id="page-rejected"><div class="page-header"><h1>❌ الطلبات المرفوضة</h1></div><div id="rejectedTable"></div></div>
+
+  </main>
+</div>
+
+<!-- ORDER DETAIL MODAL -->
+<div class="modal-ov" id="detailModal">
+  <div class="modal-box">
+    <div class="modal-head">
+      <h3 id="detailTitle">تفاصيل الطلب</h3>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body" id="detailBody"></div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+let _token = localStorage.getItem('admin_token') || '';
+let _currentFilter = null;
+let _currentOrderData = null;
+
+// ── Auth ──────────────────────────────────────────────────────────────────────
+async function doLogin(){
+  const pass = document.getElementById('loginPass').value;
+  if(!pass) return;
+  try{
+    const r = await fetch('/admin/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({password:pass})});
+    const d = await r.json();
+    if(!d.ok) throw new Error(d.error||'فشل');
+    _token = d.token;
+    localStorage.setItem('admin_token', _token);
+    document.getElementById('loginScreen').style.display='none';
+    document.getElementById('app').style.display='block';
+    loadDashboard();
+    setInterval(loadDashboard,60000);
+  }catch(e){
+    document.getElementById('loginErr').style.display='block';
+  }
+}
+
+async function checkAuth(){
+  if(!_token) return false;
+  const r = await fetch('/admin/stats',{headers:{'X-Admin-Token':_token}});
+  return r.ok;
+}
+
+function logout(){
+  localStorage.removeItem('admin_token');
+  _token='';
+  document.getElementById('loginScreen').style.display='flex';
+  document.getElementById('app').style.display='none';
+}
+
+// ── Navigation ────────────────────────────────────────────────────────────────
+function showPage(name){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('page-'+name).classList.add('active');
+  event.currentTarget.classList.add('active');
+  if(name==='orders') loadTable('ordersTable', null);
+  if(name==='approved') loadTable('approvedTable', 'approved');
+  if(name==='downloaded') loadTable('downloadedTable', 'downloaded');
+  if(name==='rejected') loadTable('rejectedTable', 'rejected');
+}
+
+// ── Dashboard ─────────────────────────────────────────────────────────────────
+async function loadDashboard(){
+  try{
+    const r = await fetch('/admin/stats',{headers:{'X-Admin-Token':_token}});
+    if(r.status===401){logout();return;}
+    const d = await r.json();
+    document.getElementById('st-revenue').textContent = (d.revenue_dzd||0).toLocaleString('ar-DZ');
+    document.getElementById('st-total').textContent = (d.total||0)+' طلب';
+    document.getElementById('st-pending').textContent = d.pending||0;
+    document.getElementById('st-approved').textContent = d.approved||0;
+    document.getElementById('st-downloaded').textContent = d.downloaded||0;
+    document.getElementById('st-today').textContent = 'اليوم: '+(d.today||0);
+    const pb = document.getElementById('pendingBadge');
+    if(d.pending>0){pb.textContent=d.pending;pb.style.display='inline';}else pb.style.display='none';
+    document.getElementById('lastRefresh').textContent = 'آخر تحديث: '+new Date().toLocaleTimeString('ar-DZ');
+    loadDashPending();
+  }catch(e){console.error(e);}
+}
+
+async function loadDashPending(){
+  try{
+    const r = await fetch('/admin/orders?status=pending',{headers:{'X-Admin-Token':_token}});
+    const orders = await r.json();
+    const el = document.getElementById('dashPendingList');
+    if(!orders.length){el.innerHTML='<div class="empty-state">🎉 لا توجد طلبات معلقة</div>';return;}
+    el.innerHTML = buildTable(orders.slice(0,10));
+  }catch(e){}
+}
+
+// ── Orders Table ──────────────────────────────────────────────────────────────
+async function loadTable(containerId, status){
+  const url = status ? '/admin/orders?status='+status : '/admin/orders';
+  try{
+    const r = await fetch(url,{headers:{'X-Admin-Token':_token}});
+    const orders = await r.json();
+    document.getElementById(containerId).innerHTML = `
+      <div class="table-wrap">
+        <div class="table-toolbar">
+          <h3>${orders.length} طلب</h3>
+          <button class="tb-refresh" onclick="loadTable('${containerId}','${status||''}')">🔄 تحديث</button>
+        </div>
+        ${buildTable(orders)}
+      </div>`;
+  }catch(e){}
+}
+
+function buildTable(orders){
+  if(!orders.length) return '<div class="empty-state">📭 لا توجد طلبات</div>';
+  return `<table><thead><tr>
+    <th>رقم الطلب</th><th>الطالب</th><th>الدرجة</th><th>الدفع</th><th>الحالة</th><th>التاريخ</th><th>إجراء</th>
+  </tr></thead><tbody>`+
+  orders.map(o=>`<tr>
+    <td><span class="order-id">${o.id}</span></td>
+    <td>${escHtml(o.student_name)}</td>
+    <td>${degreeLabel(o.degree)}</td>
+    <td><span class="method-badge">${o.payment_method?.toUpperCase()||'—'}</span></td>
+    <td>${statusBadge(o.status)}</td>
+    <td style="font-size:10px;color:var(--muted)">${fmtDate(o.created_at)}</td>
+    <td><div class="action-btns">
+      <button class="act-btn view" onclick="openDetail('${o.id}')">عرض</button>
+      ${o.status==='pending'?`<button class="act-btn approve" onclick="quickApprove('${o.id}')">✓ قبول</button><button class="act-btn reject" onclick="quickReject('${o.id}')">✕ رفض</button>`:''}
+      ${o.status==='approved'?`<button class="act-btn resend" onclick="quickResend('${o.id}')">📤 كود</button>`:''}
+    </div></td>
+  </tr>`).join('')+'</tbody></table>';
+}
+
+// ── Detail Modal ──────────────────────────────────────────────────────────────
+async function openDetail(orderId){
+  try{
+    const r = await fetch('/admin/orders/'+orderId,{headers:{'X-Admin-Token':_token}});
+    const {order:o, audit} = await r.json();
+    _currentOrderData = o;
+    document.getElementById('detailTitle').textContent = 'الطلب: '+o.id;
+
+    let codeSection = '';
+    if(o.download_code){
+      const expiry = o.code_expires ? new Date(o.code_expires*1000).toLocaleString('ar-DZ') : 'بلا انتهاء';
+      codeSection = `<div class="code-display">
+        <div class="cd-label">كود التفعيل ${o.code_used?'(تم استخدامه)':''}</div>
+        <div class="cd-code">${o.download_code}</div>
+        <div class="cd-expires">ينتهي: ${expiry}</div>
+        <button class="copy-btn" onclick="copyCode('${o.download_code}')">📋 نسخ الكود</button>
+      </div>`;
+    }
+
+    let receiptSection = '';
+    if(o.receipt_path){
+      const isImg = (o.receipt_mime||'').startsWith('image/');
+      receiptSection = `<div class="receipt-preview">
+        <div class="receipt-preview-head">🧾 وصل التسديد
+          <a href="/admin/orders/${o.id}/receipt?token=${_token}" target="_blank" style="margin-right:auto;color:var(--info);font-size:10px">فتح في تبويب جديد ↗</a>
+        </div>
+        ${isImg
+          ? `<img src="/admin/orders/${o.id}/receipt?token=${_token}" class="receipt-preview-img">`
+          : `<iframe src="/admin/orders/${o.id}/receipt?token=${_token}" class="receipt-frame"></iframe>`}
+      </div>`;
+    } else {
+      receiptSection = `<div style="background:var(--card);border:1px dashed var(--border);border-radius:10px;padding:20px;text-align:center;color:var(--muted);font-size:12px;margin-bottom:16px">⚠️ لم يتم رفع وصل بعد</div>`;
+    }
+
+    const auditHtml = audit.length ? audit.map(a=>`<div class="audit-item">
+      <span class="ai-time">${fmtDate(a.ts)}</span>
+      <span class="ai-action">${a.action}</span>
+      <span class="ai-actor">— ${a.actor}</span>
+      ${a.detail?`<span style="color:var(--muted);font-size:10px">(${escHtml(a.detail)})</span>`:''}
+    </div>`).join('') : '<div style="color:var(--muted);font-size:11px">لا يوجد سجل</div>';
+
+    document.getElementById('detailBody').innerHTML = `
+      <div class="detail-grid">
+        <div class="detail-row"><div class="dr-label">رقم الطلب</div><div class="dr-val mono gold">${o.id}</div></div>
+        <div class="detail-row"><div class="dr-label">الحالة</div><div class="dr-val">${statusBadge(o.status)}</div></div>
+        <div class="detail-row"><div class="dr-label">الطالب</div><div class="dr-val">${escHtml(o.student_name)}</div></div>
+        <div class="detail-row"><div class="dr-label">الدرجة العلمية</div><div class="dr-val">${degreeLabel(o.degree)}</div></div>
+        <div class="detail-row"><div class="dr-label">البريد الإلكتروني</div><div class="dr-val mono" style="font-size:11px">${o.email||'—'}</div></div>
+        <div class="detail-row"><div class="dr-label">الهاتف</div><div class="dr-val mono">${o.phone||'—'}</div></div>
+        <div class="detail-row"><div class="dr-label">طريقة الدفع</div><div class="dr-val"><span class="method-badge" style="font-size:12px">${(o.payment_method||'—').toUpperCase()}</span></div></div>
+        <div class="detail-row"><div class="dr-label">المبلغ</div><div class="dr-val gold">${o.amount} دج</div></div>
+        <div class="detail-row" style="grid-column:span 2"><div class="dr-label">عنوان المذكرة</div><div class="dr-val">${escHtml(o.title_ar)||'—'}</div></div>
+        <div class="detail-row"><div class="dr-label">تاريخ الإنشاء</div><div class="dr-val mono" style="font-size:11px">${fmtDate(o.created_at)}</div></div>
+        ${o.download_ip?`<div class="detail-row"><div class="dr-label">IP التحميل</div><div class="dr-val mono" style="font-size:11px">${o.download_ip}</div></div>`:'<div></div>'}
+      </div>
+      ${receiptSection}
+      ${codeSection}
+      ${o.status==='pending'||o.status==='rejected'?`
+      <div style="margin-bottom:12px">
+        <label style="font-size:11px;font-weight:700;color:var(--muted);display:block;margin-bottom:6px">ملاحظة المدير (اختياري)</label>
+        <textarea class="admin-note-area" id="adminNote" placeholder="سبب الرفض أو ملاحظة...">${o.admin_note||''}</textarea>
+      </div>
+      <div class="modal-actions">
+        <button class="ma-btn approve" onclick="approveOrder('${o.id}')">✅ قبول وإرسال الكود</button>
+        <button class="ma-btn reject" onclick="rejectOrder('${o.id}')">❌ رفض الطلب</button>
+        <button class="ma-btn close" onclick="closeModal()">إغلاق</button>
+      </div>`
+      : o.status==='approved'?`
+      <div class="modal-actions">
+        <button class="ma-btn resend" onclick="resendCode('${o.id}')">📤 إعادة توليد الكود</button>
+        <button class="ma-btn close" onclick="closeModal()">إغلاق</button>
+      </div>`
+      : `<div class="modal-actions"><button class="ma-btn close" style="flex:1" onclick="closeModal()">إغلاق</button></div>`}
+      <div class="audit-list">
+        <h4>سجل الأحداث</h4>
+        ${auditHtml}
+      </div>
+    `;
+    document.getElementById('detailModal').classList.add('open');
+  }catch(e){showToast('خطأ في تحميل التفاصيل','err');}
+}
+
+function closeModal(){document.getElementById('detailModal').classList.remove('open');}
+
+// ── Actions ───────────────────────────────────────────────────────────────────
+async function approveOrder(orderId){
+  const note = document.getElementById('adminNote')?.value||'';
+  try{
+    const r = await fetch('/admin/orders/'+orderId+'/approve',{method:'POST',headers:{'Content-Type':'application/json','X-Admin-Token':_token},body:JSON.stringify({note,ttl_hours:48})});
+    const d = await r.json();
+    if(!d.ok) throw new Error(d.error);
+    closeModal();
+    showToast('✅ تم القبول — الكود: '+d.download_code,'ok');
+    copyCode(d.download_code, false);
+    await loadDashboard();
+    loadTable('ordersTable',null);
+  }catch(e){showToast('❌ '+e.message,'err');}
+}
+
+async function rejectOrder(orderId){
+  const note = document.getElementById('adminNote')?.value||'';
+  if(!confirm('هل تريد رفض هذا الطلب؟')) return;
+  try{
+    const r = await fetch('/admin/orders/'+orderId+'/reject',{method:'POST',headers:{'Content-Type':'application/json','X-Admin-Token':_token},body:JSON.stringify({note})});
+    const d = await r.json();
+    if(!d.ok) throw new Error(d.error);
+    closeModal(); showToast('تم رفض الطلب','ok'); await loadDashboard();
+  }catch(e){showToast('❌ '+e.message,'err');}
+}
+
+async function resendCode(orderId){
+  try{
+    const r = await fetch('/admin/orders/'+orderId+'/resend-code',{method:'POST',headers:{'Content-Type':'application/json','X-Admin-Token':_token},body:JSON.stringify({ttl_hours:24})});
+    const d = await r.json();
+    if(!d.ok) throw new Error(d.error);
+    showToast('📤 كود جديد: '+d.download_code,'ok');
+    copyCode(d.download_code, false);
+    closeModal();
+  }catch(e){showToast('❌ '+e.message,'err');}
+}
+
+async function quickApprove(orderId){
+  if(!confirm('قبول الطلب '+orderId+'؟')) return;
+  try{
+    const r = await fetch('/admin/orders/'+orderId+'/approve',{method:'POST',headers:{'Content-Type':'application/json','X-Admin-Token':_token},body:JSON.stringify({ttl_hours:48})});
+    const d = await r.json();
+    if(!d.ok) throw new Error(d.error);
+    showToast('✅ تم — الكود: '+d.download_code,'ok');
+    copyCode(d.download_code, false);
+    await loadDashboard(); loadTable('ordersTable',null);
+  }catch(e){showToast('❌ '+e.message,'err');}
+}
+async function quickReject(orderId){
+  if(!confirm('رفض الطلب '+orderId+'؟')) return;
+  try{
+    await fetch('/admin/orders/'+orderId+'/reject',{method:'POST',headers:{'Content-Type':'application/json','X-Admin-Token':_token},body:JSON.stringify({note:''})});
+    showToast('تم الرفض','ok'); await loadDashboard(); loadTable('ordersTable',null);
+  }catch(e){showToast('❌ '+e.message,'err');}
+}
+async function quickResend(orderId){
+  try{
+    const r = await fetch('/admin/orders/'+orderId+'/resend-code',{method:'POST',headers:{'Content-Type':'application/json','X-Admin-Token':_token},body:JSON.stringify({ttl_hours:24})});
+    const d = await r.json();
+    if(!d.ok) throw new Error(d.error);
+    showToast('📤 كود: '+d.download_code,'ok');
+    copyCode(d.download_code, false);
+  }catch(e){showToast('❌ '+e.message,'err');}
+}
+
+// ── Utilities ─────────────────────────────────────────────────────────────────
+function copyCode(code, showAlert=true){
+  navigator.clipboard.writeText(code).then(()=>{
+    if(showAlert) showToast('📋 تم نسخ الكود: '+code,'ok');
+  }).catch(()=>{if(showAlert)prompt('انسخ الكود:',code);});
+}
+function statusBadge(s){
+  const m={pending:'⏳ انتظار',approved:'✅ معتمد',rejected:'❌ مرفوض',downloaded:'⬇️ محمّل'};
+  return `<span class="badge ${s}">${m[s]||s}</span>`;
+}
+function degreeLabel(d){return {licence:'🎓 ليسانس',master:'📚 ماستر',doctorat:'🏛️ دكتوراه'}[d]||d||'—';}
+function fmtDate(ts){if(!ts) return '—';return new Date(ts*1000).toLocaleString('ar-DZ',{year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'});}
+function escHtml(s){return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function showToast(msg, type='ok'){
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.className='toast '+type+' show';
+  setTimeout(()=>t.classList.remove('show'),3500);
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+(async function(){
+  if(_token && await checkAuth()){
+    document.getElementById('loginScreen').style.display='none';
+    document.getElementById('app').style.display='block';
+    loadDashboard();
+    setInterval(loadDashboard,60000);
+  }
+  document.getElementById('loginPass').addEventListener('keydown',e=>e.key==='Enter'&&doLogin());
+})();
+</script>
+</body>
+</html>
