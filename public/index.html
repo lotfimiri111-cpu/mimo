@@ -327,9 +327,6 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
   .hdr-right{margin-right:0;width:100%}
 }
 </style>
-  <!-- pptxjs: عرض PPTX مباشرة في المتصفح -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/pptxjs@0.1.2/dist/pptxjs.min.js"></script>
 </head>
 <body>
 
@@ -1932,28 +1929,25 @@ function showLockedPreviewBanner(){
         <button class="pl-code-btn" onclick="openCodeOv()">🔑 عندي كود</button>
       </div>
     </div>
-    <div style="position:relative;margin-top:14px;border-radius:14px;overflow:hidden;background:#0a0f1e;box-shadow:0 4px 32px rgba(0,0,0,.4)">
-      <div id="pptx-preview-root" style="width:100%;min-height:400px;background:#0a0f1e;position:relative"></div>
-      <div id="pptx-loading" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;color:rgba(255,255,255,.7);background:#0a0f1e;z-index:5">
-        <div style="font-size:36px;margin-bottom:12px;animation:mspin 1.5s linear infinite;display:inline-block">⚙️</div>
-        <div style="font-size:14px">جاري تحميل معاينة العرض...</div>
-      </div>
-      <!-- طبقة حماية: تمنع النقر اليمين والسحب والاختيار -->
-      <div id="preview-shield"
-        style="position:absolute;inset:0;z-index:50;cursor:default"
-        oncontextmenu="return false"
-        onselectstart="return false"
-        ondragstart="return false">
-        <!-- علامة مائية -->
-        <div style="position:absolute;inset:0;display:flex;flex-direction:column;justify-content:space-around;align-items:center;pointer-events:none;overflow:hidden">
-          ${[...Array(4)].map((_,i)=>\`<div style="transform:rotate(-30deg);font-size:clamp(16px,3vw,28px);font-weight:900;color:rgba(255,255,255,0.12);white-space:nowrap;letter-spacing:4px;font-family:Cairo,sans-serif">مذكرتي Pro — معاينة فقط &nbsp;&nbsp;&nbsp; مذكرتي Pro — معاينة فقط</div>\`).join('')}
+    <div class="preview-container" id="previewContainer">
+      <div id="previewSlideWrap" style="position:relative;width:100%;aspect-ratio:16/9;background:#0a0f1e;border-radius:10px;display:flex;align-items:center;justify-content:center;overflow:hidden">
+        <div id="previewLoadingMsg" style="text-align:center;color:rgba(255,255,255,.6)">
+          <div style="font-size:32px;margin-bottom:10px;animation:mspin 1.5s linear infinite;display:inline-block">⚙️</div>
+          <div style="font-size:13px">جاري تحميل معاينة الشرائح...</div>
+        </div>
+        <img id="previewImg" src="" alt="شريحة"
+          style="display:none;width:100%;height:100%;object-fit:contain;user-select:none;-webkit-user-select:none;pointer-events:none"
+          oncontextmenu="return false" draggable="false">
+        <div style="position:absolute;inset:0;pointer-events:none;display:flex;flex-direction:column;justify-content:space-around;align-items:center;overflow:hidden">
+          <div style="transform:rotate(-30deg);font-size:clamp(14px,2.5vw,26px);font-weight:900;color:rgba(255,255,255,0.13);white-space:nowrap;letter-spacing:3px">مذكرتي Pro — معاينة فقط &nbsp;&nbsp; مذكرتي Pro — معاينة فقط</div>
+          <div style="transform:rotate(-30deg);font-size:clamp(14px,2.5vw,26px);font-weight:900;color:rgba(255,255,255,0.13);white-space:nowrap;letter-spacing:3px">مذكرتي Pro — معاينة فقط &nbsp;&nbsp; مذكرتي Pro — معاينة فقط</div>
+          <div style="transform:rotate(-30deg);font-size:clamp(14px,2.5vw,26px);font-weight:900;color:rgba(255,255,255,0.13);white-space:nowrap;letter-spacing:3px">مذكرتي Pro — معاينة فقط &nbsp;&nbsp; مذكرتي Pro — معاينة فقط</div>
         </div>
       </div>
-      <!-- تنقل بين الشرائح -->
-      <div class="preview-nav" style="position:relative;z-index:100">
-        <button class="pn-btn" id="prevSlideBtn" onclick="pptxPrev()" disabled>&#8594; السابقة</button>
+      <div class="preview-nav">
+        <button class="pn-btn" id="prevSlideBtn" onclick="previewPrev()" disabled>&#8594; السابقة</button>
         <span class="pn-counter" id="slideCounter">جاري التحميل...</span>
-        <button class="pn-btn" id="nextSlideBtn" onclick="pptxNext()" disabled>التالية &#8592;</button>
+        <button class="pn-btn" id="nextSlideBtn" onclick="previewNext()" disabled>التالية &#8592;</button>
       </div>
     </div>
     <button class="bnew" style="margin-top:10px" onclick="if(confirm('سيتم حذف العرض الحالي وإنشاء عرض جديد.')){localStorage.removeItem('mp_v4');location.reload()}">🔄 إنشاء عرض جديد</button>
@@ -1964,108 +1958,31 @@ function showLockedPreviewBanner(){
   setTimeout(()=>banner.scrollIntoView({behavior:'smooth',block:'center'}), 150);
 }
 
-// ── pptxjs renderer ──────────────────────────────────────────────────────────
-let _pptxSlideCount = 0;
-let _pptxCurrentSlide = 1;
-
-function renderPptxPreview(b64Data){
-  // تحويل base64 → ArrayBuffer
-  const binary = atob(b64Data);
-  const bytes = new Uint8Array(binary.length);
-  for(let i=0;i<binary.length;i++) bytes[i]=binary.charCodeAt(i);
-  const blob = new Blob([bytes], {type:'application/vnd.openxmlformats-officedocument.presentationml.presentation'});
-  const url = URL.createObjectURL(blob);
-
-  // استخدام pptxjs لعرض الشريحة
-  const root = document.getElementById('pptx-preview-root');
-  const loading = document.getElementById('pptx-loading');
-  if(!root) return;
-
-  root.innerHTML = '<div id="pptx-slides-wrap"></div>';
-
-  try{
-    $("#pptx-slides-wrap").pptxToHtml({
-      pptxFileUrl: url,
-      slideMode: false,
-      keyBoardShortCut: false,
-      slidesScale: "100%",
-      slideTop: 0,
-      slideLeft: 0,
-      success: function(total){
-        _pptxSlideCount = total;
-        _pptxCurrentSlide = 1;
-        if(loading) loading.style.display='none';
-        // إخفاء كل الشرائح ما عدا الأولى
-        _pptxShowSlide(1);
-        const ctr = document.getElementById('slideCounter');
-        if(ctr) ctr.textContent = 'الشريحة 1 من '+total;
-        const next = document.getElementById('nextSlideBtn');
-        if(next) next.disabled = (total <= 1);
-        URL.revokeObjectURL(url);
-      },
-      error: function(err){
-        console.error('pptxjs error:', err);
-        if(loading) loading.innerHTML='<div style="color:rgba(255,200,100,.8);font-size:13px">⚠️ تعذّر تحميل المعاينة</div>';
-        URL.revokeObjectURL(url);
-      }
-    });
-  }catch(e){
-    console.error('pptxjs exception:',e);
-    if(loading) loading.innerHTML='<div style="color:rgba(255,200,100,.8);font-size:13px">⚠️ '+e.message+'</div>';
-  }
-}
-
-function _pptxShowSlide(n){
-  const wrap = document.getElementById('pptx-slides-wrap');
-  if(!wrap) return;
-  // pptxjs يولّد divs بـ id="pptx-slide-N"
-  for(let i=1;i<=_pptxSlideCount;i++){
-    const s = document.getElementById('pptx-slide-'+i) ||
-              wrap.querySelectorAll('[id*="slide"]')[i-1];
-    if(s) s.style.display = (i===n)?'block':'none';
-  }
-  const ctr = document.getElementById('slideCounter');
-  if(ctr) ctr.textContent = 'الشريحة '+n+' من '+_pptxSlideCount;
-  const prev = document.getElementById('prevSlideBtn');
-  const next = document.getElementById('nextSlideBtn');
-  if(prev) prev.disabled = n<=1;
-  if(next) next.disabled = n>=_pptxSlideCount;
-  _pptxCurrentSlide = n;
-}
-function pptxNext(){ if(_pptxCurrentSlide<_pptxSlideCount) _pptxShowSlide(_pptxCurrentSlide+1); }
-function pptxPrev(){ if(_pptxCurrentSlide>1) _pptxShowSlide(_pptxCurrentSlide-1); }
-
+function renderPptxPreview(b64Data){ /* غير مستخدمة */ }
+function pptxNext(){ previewNext(); }
+function pptxPrev(){ previewPrev(); }
+// ── polling fallback للمعاينة من السيرفر ────────────────────────────────────
 async function loadRealPreview(presId, attempt){
-  attempt = attempt || 1;
-  const MAX_ATTEMPTS = 20;   // 20 × 3s = 60s max wait
-  const RETRY_MS    = 3000;
-
-  // تحديث رسالة الانتظار بمؤشر تقدم
-  const msg = document.getElementById('previewLoadingMsg');
-  if(msg && attempt > 1){
-    const dots = '.'.repeat((attempt % 4));
-    msg.innerHTML = `<div style="font-size:32px;margin-bottom:10px;animation:mspin 1.5s linear infinite;display:inline-block">⚙️</div>
-      <div style="font-size:13px">جاري تجهيز معاينة الشرائح${dots}</div>
-      <div style="font-size:11px;color:rgba(255,255,255,.4);margin-top:6px">قد يستغرق حتى دقيقة للمرة الأولى</div>`;
-  }
-
-  try{
-    const resp = await fetch('/preview/'+presId);
-    const data = await resp.json();
-    if(!data.ok || !data.slides || !data.slides.length) throw new Error('not ready');
-    _previewSlides = data.slides;
-    _previewSlideIdx = 0;
-    showPreviewSlide(0);
-    if(msg) msg.style.display='none';
-  }catch(e){
-    if(attempt < MAX_ATTEMPTS){
-      // إعادة المحاولة تلقائياً
+  attempt = attempt || 0;
+  const MAX = 15, RETRY_MS = 3000;
+  try {
+    const r = await fetch('/preview/' + presId);
+    if(!r.ok) throw new Error('HTTP ' + r.status);
+    const j = await r.json();
+    if(j.slides && j.slides.length){
+      _previewSlides = j.slides;
+      showPreviewSlide(0);
+      const msg = document.getElementById('previewLoadingMsg');
+      if(msg) msg.style.display = 'none';
+    } else if(attempt < MAX){
       setTimeout(()=>loadRealPreview(presId, attempt+1), RETRY_MS);
     } else {
-      // فشل نهائي بعد كل المحاولات
-      if(msg) msg.innerHTML = '<div style="font-size:13px;color:rgba(255,200,100,.8)">⚠️ تعذّر تحميل المعاينة — يمكنك المتابعة للشراء</div>';
-      console.warn('Preview load failed after', attempt, 'attempts:', e);
+      const msg = document.getElementById('previewLoadingMsg');
+      if(msg) msg.innerHTML = '<div style="font-size:13px;color:rgba(255,200,100,.8)">⚠️ تعذّر تحميل المعاينة — اشتر للتحميل</div>';
     }
+  } catch(e) {
+    if(attempt < MAX) setTimeout(()=>loadRealPreview(presId, attempt+1), RETRY_MS);
+    else console.warn('Preview load failed:', e);
   }
 }
 
