@@ -1,0 +1,1742 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>مذكرتي Pro</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --navy:#07172F;--navy-m:#0E274D;--gold:#C6A03C;--gold-l:#E8C97B;
+  --sf:#F4F6FB;--wh:#FFF;--text:#07172F;--muted:#64748B;--bd:#E2E8F0;
+  --ok:#10B981;--err:#EF4444;--warn:#F59E0B;
+  --r:10px;--r-lg:16px;--t:.18s ease;
+  --sh:0 2px 8px rgba(7,23,47,.07);--sh-md:0 6px 22px rgba(7,23,47,.11);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Cairo','Inter',system-ui,sans-serif;background:var(--sf);color:var(--text);direction:rtl;min-height:100vh;line-height:1.6}
+body.ltr{direction:ltr;text-align:left}
+body.ltr input,body.ltr textarea,body.ltr select{direction:ltr;text-align:left}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-thumb{background:var(--bd);border-radius:99px}
+
+/* HEADER */
+.hdr{background:linear-gradient(135deg,var(--navy) 0%,var(--navy-m) 60%,#152d58 100%);position:relative;overflow:hidden}
+.hdr::before{content:'';position:absolute;top:-60px;right:-60px;width:280px;height:280px;background:radial-gradient(circle,rgba(198,160,60,.14),transparent 68%);pointer-events:none}
+.hdr-in{max-width:1100px;margin:0 auto;padding:30px 22px 26px;display:flex;align-items:center;gap:14px;position:relative;z-index:1;flex-wrap:wrap}
+.logo{width:52px;height:52px;flex-shrink:0;background:linear-gradient(135deg,var(--gold),var(--gold-l));border-radius:13px;display:flex;align-items:center;justify-content:center;font-size:24px;box-shadow:0 5px 18px rgba(198,160,60,.35)}
+.hdr-txt h1{font-size:22px;font-weight:900;color:#fff}
+.hdr-txt h1 em{color:var(--gold);font-style:normal}
+.hdr-txt p{font-size:11px;color:rgba(255,255,255,.6);margin-top:2px}
+.hdr-pill{margin-top:5px;display:inline-flex;align-items:center;gap:5px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.14);border-radius:99px;padding:3px 10px;font-size:10px;color:var(--gold-l)}
+.hdr-pill span{width:5px;height:5px;background:var(--ok);border-radius:50%;animation:blink 2s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+.hdr-right{margin-right:auto;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+
+/* LANG SWITCHER */
+.lang-sw{display:flex;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);border-radius:8px;overflow:hidden}
+.lang-sw button{padding:5px 11px;border:none;background:transparent;color:rgba(255,255,255,.7);cursor:pointer;font-size:11px;font-weight:700;font-family:inherit;transition:all var(--t)}
+.lang-sw button.active{background:var(--gold);color:var(--navy)}
+.demo-btn{background:rgba(198,160,60,.2);border:1px solid rgba(198,160,60,.38);border-radius:8px;padding:6px 13px;font-size:11px;color:var(--gold-l);cursor:pointer;font-family:inherit;font-weight:700;transition:all var(--t)}
+.demo-btn:hover{background:rgba(198,160,60,.32)}
+
+/* STEPS */
+.sw{background:var(--wh);border-bottom:1px solid var(--bd);position:sticky;top:0;z-index:200;box-shadow:var(--sh)}
+.si{max-width:1100px;margin:0 auto;padding:0 22px;display:flex;align-items:stretch;overflow-x:auto;scrollbar-width:none}
+.si::-webkit-scrollbar{display:none}
+.sb{display:flex;align-items:center;gap:7px;padding:0 12px;height:48px;border:none;background:transparent;cursor:pointer;white-space:nowrap;border-bottom:3px solid transparent;transition:var(--t);font-family:inherit}
+.sb.active{border-bottom-color:var(--gold)}
+.sn{width:21px;height:21px;border-radius:50%;background:var(--bd);color:var(--muted);font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;transition:var(--t);flex-shrink:0}
+.sb.done .sn{background:var(--ok);color:#fff;font-size:0}.sb.done .sn::after{content:'✓';font-size:10px}
+.sb.active .sn{background:var(--gold);color:var(--navy)}
+.sl{font-size:12px;font-weight:700;color:var(--muted);transition:var(--t)}
+.sb.active .sl{color:var(--navy)}
+.prog{height:2px;background:linear-gradient(90deg,var(--gold) var(--p,0%),transparent var(--p,0%))}
+
+/* MAIN */
+.main{max-width:1100px;margin:0 auto;padding:24px 22px 90px}
+.sec{display:none}.sec.active{display:block;animation:fu .2s ease}
+@keyframes fu{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.sh{margin-bottom:16px}
+.sh h2{font-size:18px;font-weight:800;color:var(--navy);display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.stag{background:var(--gold);color:var(--navy);font-size:9px;font-weight:800;padding:2px 7px;border-radius:5px;flex-shrink:0}
+.sh p{font-size:11px;color:var(--muted);margin-top:2px}
+
+/* CARD */
+.card{background:var(--wh);border:1px solid var(--bd);border-radius:var(--r-lg);padding:18px;margin-bottom:13px;box-shadow:var(--sh)}
+.ch{display:flex;align-items:center;gap:9px;margin-bottom:13px;padding-bottom:10px;border-bottom:1px solid var(--bd)}
+.ci{width:28px;height:28px;border-radius:7px;background:linear-gradient(135deg,var(--navy),var(--navy-m));display:flex;align-items:center;justify-content:center;font-size:13px;color:#fff;flex-shrink:0}
+.ch h3{font-size:13px;font-weight:700;color:var(--navy)}
+.cbadge{font-size:9px;font-weight:700;padding:2px 6px;border-radius:99px;background:var(--sf);color:var(--muted);border:1px solid var(--bd)}
+
+/* SLIDE TOGGLE */
+.slide-toggle{margin-right:auto;display:flex;align-items:center;gap:8px}
+.tog-wrap{display:flex;align-items:center;gap:6px;padding:4px 10px;border-radius:8px;border:1.5px solid var(--bd);background:var(--sf);cursor:pointer;transition:all var(--t);user-select:none}
+.tog-wrap.on{border-color:var(--ok);background:rgba(16,185,129,.07)}
+.tog-wrap.off{border-color:var(--err);background:rgba(239,68,68,.05)}
+.tog-dot{width:14px;height:14px;border-radius:50%;transition:all var(--t)}
+.tog-wrap.on .tog-dot{background:var(--ok)}
+.tog-wrap.off .tog-dot{background:var(--err)}
+.tog-lbl{font-size:10px;font-weight:700;transition:all var(--t)}
+.tog-wrap.on .tog-lbl{color:var(--ok)}
+.tog-wrap.off .tog-lbl{color:var(--err)}
+.tog-hint{font-size:9px;color:var(--muted);margin-top:4px}
+.card.slide-disabled{opacity:.55;pointer-events:none}
+.card.slide-disabled .ch{opacity:.6}
+
+/* GRID */
+.g{display:grid;gap:10px}
+.g1{grid-template-columns:1fr}
+.g2{grid-template-columns:1fr 1fr}
+.g3{grid-template-columns:1fr 1fr 1fr}
+
+/* FORM */
+.field{display:flex;flex-direction:column;gap:4px}
+.field label{font-size:11px;font-weight:700;color:var(--navy)}
+.req{color:var(--err)}
+input[type=text],input[type=date],select,textarea{
+  width:100%;padding:8px 11px;border:1.5px solid var(--bd);border-radius:var(--r);
+  font-family:inherit;font-size:13px;color:var(--text);background:var(--wh);
+  transition:border-color var(--t);direction:rtl;appearance:none}
+body.ltr input[type=text],body.ltr input[type=date],body.ltr select,body.ltr textarea{direction:ltr}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 3px rgba(198,160,60,.1)}
+input.ferr,select.ferr,textarea.ferr{border-color:var(--err)}
+textarea{resize:vertical;min-height:70px;line-height:1.6}
+select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='7'%3E%3Cpath d='M1 1l4.5 4.5L10 1' stroke='%2364748B' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:left 10px center;padding-left:28px;cursor:pointer}
+.ferr-msg{font-size:10px;color:var(--err);display:none}
+.has-err .ferr-msg{display:block}
+
+/* CHAPTER TREE */
+.ctree{display:flex;flex-direction:column;gap:10px;margin-bottom:9px}
+.cnode{background:var(--sf);border:1.5px solid var(--bd);border-radius:var(--r);overflow:hidden;transition:border-color var(--t)}
+.cnode:focus-within{border-color:var(--gold)}
+.cnode-hdr{display:flex;align-items:center;gap:8px;padding:8px 11px;background:var(--wh);border-bottom:1px solid var(--bd)}
+.cnode-icon{width:20px;height:20px;border-radius:5px;background:var(--navy);color:#fff;font-size:9px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.cnode-hdr input{flex:1;border:none;background:transparent;font-family:inherit;font-size:13px;font-weight:700;color:var(--navy);direction:inherit}
+.cnode-hdr input:focus{outline:none}
+.cnode-del{width:22px;height:22px;border:none;background:#FEE2E2;color:var(--err);border-radius:5px;cursor:pointer;font-size:11px;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all var(--t)}
+.cnode-del:hover{background:var(--err);color:#fff}
+.cnode-subs{padding:8px 10px;display:flex;flex-direction:column;gap:5px}
+.snode{display:flex;align-items:center;gap:6px;padding:6px 9px;background:var(--wh);border:1px solid var(--bd);border-radius:7px;transition:border-color var(--t)}
+.snode:focus-within{border-color:var(--gold)}
+.snode-dot{width:6px;height:6px;border-radius:50%;background:var(--gold);flex-shrink:0}
+.snode input{flex:1;border:none;background:transparent;font-family:inherit;font-size:12px;color:var(--text);direction:inherit}
+.snode input:focus{outline:none}
+.snode-del{width:18px;height:18px;border:none;background:#FEE2E2;color:var(--err);border-radius:4px;cursor:pointer;font-size:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.snode-del:hover{background:var(--err);color:#fff}
+.add-section-btn{width:100%;padding:5px;border:1.5px dashed var(--bd);background:transparent;border-radius:7px;cursor:pointer;font-family:inherit;font-size:11px;font-weight:600;color:var(--muted);transition:all var(--t);margin-top:2px}
+.add-section-btn:hover{border-color:var(--gold);color:var(--gold)}
+
+/* DYNAMIC LISTS */
+.dlist{display:flex;flex-direction:column;gap:7px;margin-bottom:8px}
+.ditem{display:flex;align-items:flex-start;gap:7px;background:var(--sf);border:1.5px solid var(--bd);border-radius:var(--r);padding:8px;transition:border-color var(--t)}
+.ditem:focus-within{border-color:var(--gold)}
+.dn{width:21px;height:21px;border-radius:5px;background:var(--navy);color:#fff;font-size:10px;font-weight:700;flex-shrink:0;display:flex;align-items:center;justify-content:center;margin-top:3px}
+.df{flex:1;display:flex;gap:6px;flex-wrap:wrap}
+.df input,.df textarea{flex:1;min-width:120px;padding:7px 10px;border:1.5px solid var(--bd);border-radius:8px;font-family:inherit;font-size:12px;direction:inherit;background:var(--wh);color:var(--text);transition:border-color var(--t)}
+.df input:focus,.df textarea:focus{outline:none;border-color:var(--gold)}
+.df textarea{min-height:50px;resize:vertical}
+.brm{width:24px;height:24px;flex-shrink:0;border:none;background:#FEE2E2;color:var(--err);border-radius:6px;cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center;transition:all var(--t);margin-top:2px}
+.brm:hover{background:var(--err);color:#fff}
+.badd{width:100%;padding:7px;border:2px dashed var(--bd);background:transparent;border-radius:var(--r);cursor:pointer;font-family:inherit;font-size:12px;font-weight:600;color:var(--muted);transition:all var(--t);display:flex;align-items:center;justify-content:center;gap:4px}
+.badd:hover{border-color:var(--gold);color:var(--gold);background:rgba(198,160,60,.04)}
+
+/* TIP */
+.tip{background:rgba(198,160,60,.07);border:1px solid rgba(198,160,60,.2);border-radius:8px;padding:9px 12px;font-size:11px;color:var(--navy);display:flex;align-items:flex-start;gap:6px;margin-bottom:11px}
+
+/* KPI */
+.kgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(145px,1fr));gap:9px}
+.kcard{background:var(--sf);border:1.5px solid var(--bd);border-radius:var(--r);padding:10px;position:relative}
+.kcard:focus-within{border-color:var(--gold)}
+.kcard.kpi-warn{border-color:#F59E0B!important}
+.kcard input{border:none;background:transparent;font-family:inherit;direction:inherit;width:100%;padding:0}
+.kcard input:focus{outline:none}
+.klbl{font-size:10px;font-weight:700;color:var(--muted)}
+.kval{font-size:19px;font-weight:900;color:var(--navy)}
+.kval-hint{font-size:9px;color:#9CA3AF;margin-top:2px;display:none}
+.kcard.kpi-warn .kval-hint{display:block;color:#F59E0B}
+.kdel{position:absolute;top:5px;left:5px;width:17px;height:17px;border-radius:4px;border:none;background:#FEE2E2;color:var(--err);cursor:pointer;font-size:10px;display:none;align-items:center;justify-content:center}
+.kcard:hover .kdel{display:flex}
+
+/* MODEL PICKER */
+.mpick{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:18px}
+.mopt input{display:none}
+.mcard{border:3px solid var(--bd);border-radius:13px;cursor:pointer;overflow:hidden;transition:all var(--t);position:relative}
+.mopt input:checked+.mcard{border-color:var(--gold);box-shadow:0 0 0 3px rgba(198,160,60,.18)}
+.mcard-top{padding:16px 16px 12px}
+.mcard-top h4{font-size:14px;font-weight:900;color:#fff}
+.mcard-top p{font-size:10px;color:rgba(255,255,255,.55);margin-top:2px}
+.mcheck{position:absolute;top:10px;left:10px;width:20px;height:20px;border-radius:50%;background:var(--gold);color:var(--navy);font-size:10px;font-weight:900;display:none;align-items:center;justify-content:center}
+.mopt input:checked~.mcard .mcheck{display:flex}
+.mcard-palettes{padding:10px 13px;display:flex;flex-wrap:wrap;gap:5px;background:#fff}
+.mcard-palettes span{font-size:10px;font-weight:700;padding:2px 7px;border-radius:99px;background:var(--sf);color:var(--muted);border:1px solid var(--bd)}
+.mcard-count{font-size:9px;color:var(--muted);padding:0 13px 10px;background:#fff}
+
+/* COLOR PICKER */
+.cpick{display:grid;gap:9px}
+.cpick.classic-colors{grid-template-columns:repeat(4,1fr)}
+.cpick.premium-colors{grid-template-columns:repeat(3,1fr)}
+.copt input{display:none}
+.ccard{border:3px solid var(--bd);border-radius:10px;overflow:hidden;cursor:pointer;transition:all var(--t)}
+.copt input:checked+.ccard{border-color:var(--gold);box-shadow:0 0 0 3px rgba(198,160,60,.2)}
+.ccard-swatch{height:50px;display:flex;align-items:center;justify-content:center;position:relative}
+.ccard-chk{width:19px;height:19px;border-radius:50%;background:var(--gold);color:var(--navy);font-size:10px;font-weight:900;display:none;align-items:center;justify-content:center}
+.copt input:checked~.ccard .ccard-chk{display:flex}
+.ccard-info{padding:6px 8px;background:#fff;border-top:1px solid var(--bd)}
+.ccard-name{font-size:10px;font-weight:800;color:var(--navy)}
+.ccard-desc{font-size:9px;color:var(--muted);margin-top:1px}
+.color-preview{margin-top:9px;padding:9px 13px;border-radius:9px;font-size:11px;display:flex;align-items:center;gap:8px;min-height:40px}
+
+/* NAV */
+.nbar{display:flex;justify-content:space-between;align-items:center;margin-top:22px;padding-top:16px;border-top:1px solid var(--bd)}
+.bprev{padding:9px 20px;border-radius:var(--r);border:1.5px solid var(--bd);background:var(--wh);color:var(--muted);font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;transition:all var(--t)}
+.bprev:hover{background:var(--bd)}
+.bnext{padding:9px 22px;border-radius:var(--r);background:linear-gradient(135deg,var(--navy),var(--navy-m));color:#fff;font-family:inherit;font-size:13px;font-weight:700;border:none;cursor:pointer;box-shadow:0 4px 16px rgba(7,23,47,.2);transition:all var(--t)}
+.bnext:hover{transform:translateY(-2px);box-shadow:0 7px 22px rgba(7,23,47,.28)}
+
+/* GENERATE */
+.garea{text-align:center;padding:20px 0 6px}
+.bgen{padding:13px 40px;border-radius:13px;background:linear-gradient(135deg,var(--gold),var(--gold-l));color:var(--navy);font-family:inherit;font-size:15px;font-weight:900;border:none;cursor:pointer;box-shadow:0 6px 22px rgba(198,160,60,.33);transition:all .22s;display:inline-flex;align-items:center;gap:7px}
+.bgen:hover{transform:translateY(-3px);box-shadow:0 11px 30px rgba(198,160,60,.42)}
+.ghint{font-size:10px;color:var(--muted);margin-top:6px}
+
+/* AUTOSAVE */
+.asbar{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:var(--navy);color:#fff;font-size:11px;font-weight:600;padding:6px 14px;border-radius:99px;display:flex;align-items:center;gap:5px;z-index:500;opacity:0;transition:opacity .3s;pointer-events:none;box-shadow:0 6px 22px rgba(7,23,47,.22)}
+.asbar.vis{opacity:1}
+.asdot{width:5px;height:5px;background:var(--ok);border-radius:50%}
+
+/* MODAL */
+.ov{position:fixed;inset:0;background:rgba(7,23,47,.75);backdrop-filter:blur(10px);display:none;align-items:center;justify-content:center;z-index:1000}
+.ov.open{display:flex}
+.mbox{background:#fff;border-radius:18px;padding:38px 42px;text-align:center;max-width:400px;width:92%;box-shadow:0 24px 60px rgba(7,23,47,.3);animation:min .22s ease}
+@keyframes min{from{opacity:0;transform:scale(.94) translateY(11px)}to{opacity:1;transform:scale(1) translateY(0)}}
+.mic{width:70px;height:70px;border-radius:50%;margin:0 auto 16px;display:flex;align-items:center;justify-content:center;font-size:30px}
+.mspin{background:linear-gradient(135deg,var(--navy),var(--navy-m));animation:pr 1.5s ease-in-out infinite}
+.mok{background:linear-gradient(135deg,#10B981,#34D399)}
+@keyframes pr{0%,100%{box-shadow:0 0 0 0 rgba(7,23,47,.36)}50%{box-shadow:0 0 0 11px rgba(7,23,47,0)}}
+.mbox h3{font-size:18px;font-weight:800;color:var(--navy);margin-bottom:4px}
+.mbox p{font-size:12px;color:var(--muted);margin-bottom:18px}
+.ptrack{height:6px;background:var(--bd);border-radius:99px;overflow:hidden;margin-bottom:6px}
+.pfill{height:100%;background:linear-gradient(90deg,var(--gold),var(--gold-l));border-radius:99px;transition:width .4s ease;width:0}
+.plbl{font-size:11px;color:var(--muted)}
+.bdl{display:inline-flex;align-items:center;gap:6px;padding:11px 28px;border-radius:var(--r);background:linear-gradient(135deg,#10B981,#059669);color:#fff;font-family:inherit;font-size:13px;font-weight:700;border:none;cursor:pointer;margin-top:13px;text-decoration:none;transition:all .2s}
+.bdl:hover{transform:translateY(-2px)}
+.bnew{display:block;margin:7px auto 0;padding:7px 18px;border-radius:var(--r);border:1.5px solid var(--bd);background:transparent;color:var(--muted);font-family:inherit;font-size:11px;font-weight:600;cursor:pointer;transition:all .2s}
+.bnew:hover{border-color:var(--gold);color:var(--gold)}
+.fallback-note{margin:10px 0 2px;padding:8px 12px;background:rgba(255,180,0,.12);border:1px solid rgba(255,180,0,.3);border-radius:7px;font-size:11px;color:#e8c060;text-align:center}
+
+@media(max-width:900px){
+  .mpick{grid-template-columns:1fr 1fr}}
+@media(max-width:660px){
+  .mpick,.cpick.classic-colors{grid-template-columns:1fr}
+  .cpick.premium-colors{grid-template-columns:1fr}
+  .g2,.g3{grid-template-columns:1fr}
+  .mbox{padding:26px 16px}
+  .hdr-right{margin-right:0;width:100%}
+}
+</style>
+</head>
+<body>
+
+<header class="hdr">
+  <div class="hdr-in">
+    <div class="logo">🎓</div>
+    <div class="hdr-txt">
+      <h1>مذكرتي <em>Pro</em></h1>
+      <p data-i18n="app_subtitle">منشئ العروض الأكاديمية للجامعات الجزائرية</p>
+      <div class="hdr-pill"><span></span><span data-i18n="app_pill">موديلان · 11 لوناً · ثلاث لغات</span></div>
+    </div>
+    <div class="hdr-right">
+      <div class="lang-sw">
+        <button onclick="setLang('ar')" id="lb-ar" class="active">عربي</button>
+        <button onclick="setLang('fr')" id="lb-fr">FR</button>
+        <button onclick="setLang('en')" id="lb-en">EN</button>
+      </div>
+      <button class="demo-btn" onclick="fillDemo()" data-i18n="demo_btn">🧪 تعبئة تجريبية</button>
+    </div>
+  </div>
+</header>
+
+<nav class="sw">
+  <div class="si">
+    <button class="sb active" id="sn0" onclick="goTo(0)"><div class="sn">1</div><span class="sl" data-i18n="step1">بيانات الطالب</span></button>
+    <button class="sb" id="sn1" onclick="goTo(1)"><div class="sn">2</div><span class="sl" data-i18n="step2">خطة الدراسة</span></button>
+    <button class="sb" id="sn2" onclick="goTo(2)"><div class="sn">3</div><span class="sl" data-i18n="step3">الإشكالية والأهداف</span></button>
+    <button class="sb" id="sn3" onclick="goTo(3)"><div class="sn">4</div><span class="sl" data-i18n="step4">المنهجية والعينة</span></button>
+    <button class="sb" id="sn4" onclick="goTo(4)"><div class="sn">5</div><span class="sl" data-i18n="step5">النتائج والخاتمة</span></button>
+    <button class="sb" id="sn5" onclick="goTo(5)"><div class="sn">6</div><span class="sl" data-i18n="step6">الموديل واللون</span></button>
+  </div>
+  <div class="prog" id="pbar"></div>
+</nav>
+
+<main class="main">
+
+<!-- ══════════════════════════════════════════════════════
+     STEP 0: بيانات الطالب
+     ══════════════════════════════════════════════════════ -->
+<section class="sec active" id="s0">
+  <div class="sh">
+    <h2>🎓 <span data-i18n="s1_title">بيانات الطالب والمذكرة</span> <span class="stag">1 / 6</span></h2>
+    <p data-i18n="s1_sub">المعلومات الأساسية للغلاف</p>
+  </div>
+
+  <div class="card">
+    <div class="ch"><div class="ci">👤</div><h3 data-i18n="student_name">هوية الطالب</h3></div>
+    <div class="g g2">
+      <div class="field" id="fld-sn"><label><span data-i18n="student_name">اسم الطالب</span> <span class="req">*</span></label><input type="text" id="studentName" data-i18n-ph="ph_student"><div class="ferr-msg" data-i18n="required">مطلوب</div></div>
+      <div class="field"><label data-i18n="student_id">رقم التسجيل</label><input type="text" id="studentId" data-i18n-ph="ph_id"></div>
+      <div class="field" id="fld-mj"><label><span data-i18n="major">التخصص</span> <span class="req">*</span></label><input type="text" id="major" data-i18n-ph="ph_major"><div class="ferr-msg" data-i18n="required">مطلوب</div></div>
+      <div class="field"><label data-i18n="level">المستوى</label>
+        <select id="level">
+          <option value="ماستر 2" data-i18n="level_m2">ماستر 2</option>
+          <option value="ماستر 1" data-i18n="level_m1">ماستر 1</option>
+          <option value="دكتوراه" data-i18n="level_phd">دكتوراه</option>
+          <option value="ليسانس" data-i18n="level_lic">ليسانس</option>
+        </select>
+      </div>
+      <div class="field"><label data-i18n="year">السنة الجامعية</label><input type="text" id="year" data-i18n-ph="ph_year"></div>
+      <div class="field"><label data-i18n="defense_date">تاريخ المناقشة</label><input type="date" id="defenseDate"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="ch"><div class="ci">🏛️</div><h3 data-i18n="university">المؤسسة</h3></div>
+    <div class="g g1">
+      <div class="field" id="fld-uni"><label><span data-i18n="university">الجامعة</span> <span class="req">*</span></label><input type="text" id="university" data-i18n-ph="ph_university"><div class="ferr-msg" data-i18n="required">مطلوب</div></div>
+    </div>
+    <div class="g g2" style="margin-top:10px">
+      <div class="field"><label data-i18n="faculty">الكلية</label><input type="text" id="faculty" data-i18n-ph="ph_faculty"></div>
+      <div class="field"><label data-i18n="department">القسم</label><input type="text" id="department" data-i18n-ph="ph_department"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="ch"><div class="ci">📋</div><h3 data-i18n="supervisor">بيانات المذكرة</h3></div>
+    <div class="g g2">
+      <div class="field" id="fld-sup"><label><span data-i18n="supervisor">المشرف</span> <span class="req">*</span></label><input type="text" id="supervisor" data-i18n-ph="ph_supervisor"><div class="ferr-msg" data-i18n="required">مطلوب</div></div>
+      <div class="field"><label data-i18n="co_supervisor">المشرف المساعد</label><input type="text" id="coSupervisor" placeholder="اختياري"></div>
+    </div>
+    <div class="g g1" style="margin-top:10px">
+      <div class="field" id="fld-ta"><label><span data-i18n="title_ar">عنوان المذكرة بالعربية</span> <span class="req">*</span></label><textarea id="titleAr" rows="2" data-i18n-ph="ph_title_ar"></textarea><div class="ferr-msg" data-i18n="required">مطلوب</div></div>
+      <div class="field"><label data-i18n="title_fr">Titre en français</label><textarea id="titleFr" rows="2" data-i18n-ph="ph_title_fr"></textarea></div>
+      <div class="field"><label data-i18n="field_en">مجال البحث بالإنجليزية</label><input type="text" id="fieldEn" data-i18n-ph="ph_field_en"></div>
+      <div class="field"><label data-i18n="keywords">الكلمات المفتاحية</label><input type="text" id="keywords" data-i18n-ph="ph_keywords"></div>
+    </div>
+  </div>
+
+  <div class="nbar"><div></div><button class="bnext" onclick="validate0()"><span data-i18n="next">التالي ←</span></button></div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════
+     STEP 1: خطة الدراسة
+     ══════════════════════════════════════════════════════ -->
+<section class="sec" id="s1">
+  <div class="sh">
+    <h2>📋 <span data-i18n="s2_title">خطة الدراسة</span> <span class="stag">2 / 6</span></h2>
+    <p data-i18n="s2_sub">عناوين الفصول والمباحث تُعرض في شريحة المقدمة</p>
+  </div>
+
+  <!-- شريحة المقدمة -->
+  <div class="card" id="card-intro">
+    <div class="ch">
+      <div class="ci">🌐</div>
+      <h3 data-i18n="intro_overview">لمحة عامة</h3>
+      <div class="slide-toggle">
+        <div class="tog-wrap on" id="tog-intro" onclick="toggleSlide('intro')">
+          <div class="tog-dot"></div><span class="tog-lbl" data-i18n="toggle_on">مُفعَّل ✓</span>
+        </div>
+      </div>
+    </div>
+    <div class="g g1">
+      <div class="field"><label data-i18n="intro_overview">لمحة عامة عن الموضوع</label><textarea id="introOverview" rows="3" data-i18n-ph="ph_overview"></textarea></div>
+      <div class="field"><label data-i18n="intro_approach">المقاربة النظرية (اختياري)</label><input type="text" id="introApproach" data-i18n-ph="ph_approach"></div>
+    </div>
+  </div>
+
+  <!-- شريحة خطة الدراسة -->
+  <div class="card" id="card-plan">
+    <div class="ch">
+      <div class="ci">📑</div>
+      <h3 data-i18n="chapters">الفصول والمباحث</h3>
+      <div class="slide-toggle">
+        <div class="tog-wrap on" id="tog-plan" onclick="toggleSlide('plan')">
+          <div class="tog-dot"></div><span class="tog-lbl" data-i18n="toggle_on">مُفعَّل ✓</span>
+        </div>
+      </div>
+    </div>
+    <div class="tip">💡 <span data-i18n="s2_sub">عناوين الفصول والمباحث تُعرض في شريحة خطة الدراسة</span></div>
+    <div class="ctree" id="ctree"></div>
+    <button class="badd" onclick="addChapter()" data-i18n="add_chapter">＋ إضافة فصل</button>
+  </div>
+
+  <div class="nbar">
+    <button class="bprev" onclick="goTo(0)" data-i18n="prev">→ السابق</button>
+    <button class="bnext" onclick="goTo(2)" data-i18n="next">التالي ←</button>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════
+     STEP 2: الإشكالية والأهداف
+     ══════════════════════════════════════════════════════ -->
+<section class="sec" id="s2">
+  <div class="sh">
+    <h2>❓ <span data-i18n="s3_title">الإشكالية والتساؤلات والأهداف</span> <span class="stag">3 / 6</span></h2>
+  </div>
+
+  <!-- الإشكالية -->
+  <div class="card" id="card-problem">
+    <div class="ch">
+      <div class="ci">🔍</div><h3 data-i18n="main_problem">الإشكالية</h3>
+      <div class="slide-toggle">
+        <div class="tog-wrap on" id="tog-problem" onclick="toggleSlide('problem')">
+          <div class="tog-dot"></div><span class="tog-lbl" data-i18n="toggle_on">مُفعَّل ✓</span>
+        </div>
+      </div>
+    </div>
+    <div class="g g1">
+      <div class="field"><label data-i18n="main_problem">الإشكالية الرئيسية (لمحة مختصرة)</label><textarea id="mainProblem" rows="3" data-i18n-ph="ph_problem"></textarea></div>
+      <div class="field"><label data-i18n="main_question">التساؤل الرئيسي</label><textarea id="mainQuestion" rows="2" data-i18n-ph="ph_question"></textarea></div>
+    </div>
+    <div class="g g2" style="margin-top:11px">
+      <div>
+        <div style="font-size:11px;font-weight:700;color:var(--navy);margin-bottom:7px" data-i18n="sub_questions">التساؤلات الفرعية <span class="cbadge">حتى 5</span></div>
+        <div class="dlist" id="dl-subQ"></div>
+        <button class="badd" onclick="addS('dl-subQ','تساؤل')" data-i18n="add_question">＋ إضافة تساؤل</button>
+      </div>
+      <div>
+        <div style="font-size:11px;font-weight:700;color:var(--navy);margin-bottom:7px" data-i18n="hypotheses">الفرضيات <span class="cbadge">حتى 5</span></div>
+        <div class="dlist" id="dl-hyp"></div>
+        <button class="badd" onclick="addS('dl-hyp','فرضية')" data-i18n="add_hypothesis">＋ إضافة فرضية</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- الأهداف -->
+  <div class="card" id="card-objectives">
+    <div class="ch">
+      <div class="ci">🎯</div><h3 data-i18n="objectives">الأهداف</h3>
+      <div class="slide-toggle">
+        <div class="tog-wrap on" id="tog-objectives" onclick="toggleSlide('objectives')">
+          <div class="tog-dot"></div><span class="tog-lbl" data-i18n="toggle_on">مُفعَّل ✓</span>
+        </div>
+      </div>
+    </div>
+    <div class="dlist" id="dl-obj"></div>
+    <button class="badd" onclick="addS('dl-obj','هدف')" data-i18n="add_objective">＋ إضافة هدف</button>
+  </div>
+
+  <!-- الأهمية -->
+  <div class="card" id="card-importance">
+    <div class="ch">
+      <div class="ci">⭐</div><h3 data-i18n="importance">أهمية الدراسة</h3>
+      <div class="slide-toggle">
+        <div class="tog-wrap on" id="tog-importance" onclick="toggleSlide('importance')">
+          <div class="tog-dot"></div><span class="tog-lbl" data-i18n="toggle_on">مُفعَّل ✓</span>
+        </div>
+      </div>
+    </div>
+    <div class="dlist" id="dl-importance"></div>
+    <button class="badd" onclick="addS('dl-importance','أهمية')" data-i18n="add_item">＋ إضافة نقطة</button>
+  </div>
+
+  <div class="nbar">
+    <button class="bprev" onclick="goTo(1)" data-i18n="prev">→ السابق</button>
+    <button class="bnext" onclick="goTo(3)" data-i18n="next">التالي ←</button>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════
+     STEP 3: المنهجية والعينة
+     ══════════════════════════════════════════════════════ -->
+<section class="sec" id="s3">
+  <div class="sh">
+    <h2>🔬 <span data-i18n="s4_title">المنهجية والعينة</span> <span class="stag">4 / 6</span></h2>
+  </div>
+
+  <div class="card" id="card-methodology">
+    <div class="ch">
+      <div class="ci">🔧</div><h3 data-i18n="methodology">المنهجية</h3>
+      <div class="slide-toggle">
+        <div class="tog-wrap on" id="tog-methodology" onclick="toggleSlide('methodology')">
+          <div class="tog-dot"></div><span class="tog-lbl" data-i18n="toggle_on">مُفعَّل ✓</span>
+        </div>
+      </div>
+    </div>
+    <div class="g g2">
+      <div class="field"><label data-i18n="methodology">المنهج (مع تعريف مختصر)</label><textarea id="methodology" rows="3" data-i18n-ph="ph_methodology"></textarea></div>
+      <div class="field"><label data-i18n="data_source">مصدر البيانات</label><input type="text" id="dataSource" placeholder="مصدر البيانات"></div>
+      <div class="field"><label data-i18n="sample_type">نوع العينة</label><input type="text" id="sampleType" data-i18n-ph="ph_sample_type"></div>
+      <div class="field"><label data-i18n="sample_size">حجم العينة / العدد</label><input type="text" id="sampleSize" data-i18n-ph="ph_sample_size"></div>
+      <div class="field"><label data-i18n="tool">أداة الدراسة</label><input type="text" id="tool" data-i18n-ph="ph_tool"></div>
+      <div class="field"><label data-i18n="software">برنامج التحليل</label><input type="text" id="software" placeholder="Stata 17 · SPSS · EViews"></div>
+    </div>
+
+    <!-- محاور الأداة -->
+    <div style="margin-top:13px">
+      <div style="font-size:11px;font-weight:700;color:var(--navy);margin-bottom:7px" data-i18n="tool_axes">محاور الأداة (الاستمارة)</div>
+      <div class="dlist" id="dl-axes"></div>
+      <button class="badd" onclick="addS('dl-axes','محور')" data-i18n="add_axis">＋ إضافة محور</button>
+    </div>
+
+    <!-- المجالات -->
+    <div class="g g3" style="margin-top:13px">
+      <div class="field"><label data-i18n="spatial_scope">المجال المكاني</label><textarea id="spatialScope" rows="2" data-i18n-ph="ph_spatial"></textarea></div>
+      <div class="field"><label data-i18n="temporal_scope">المجال الزماني</label><textarea id="temporalScope" rows="2" data-i18n-ph="ph_temporal"></textarea></div>
+      <div class="field"><label data-i18n="human_scope">المجال البشري</label><textarea id="humanScope" rows="2" data-i18n-ph="ph_human"></textarea></div>
+    </div>
+
+    <!-- الاختبارات -->
+    <div style="margin-top:13px">
+      <div style="font-size:11px;font-weight:700;color:var(--navy);margin-bottom:7px" data-i18n="statistical_tests">الاختبارات الإحصائية</div>
+      <div class="dlist" id="dl-tests"></div>
+      <button class="badd" onclick="addS('dl-tests','اختبار')" data-i18n="add_test">＋ إضافة اختبار</button>
+    </div>
+  </div>
+
+  <!-- KPI -->
+  <div class="card" id="card-kpi">
+    <div class="ch">
+      <div class="ci">📊</div><h3 data-i18n="kpi_title">المؤشرات الإحصائية KPI</h3>
+      <div class="slide-toggle">
+        <div class="tog-wrap on" id="tog-kpi" onclick="toggleSlide('kpi')">
+          <div class="tog-dot"></div><span class="tog-lbl" data-i18n="toggle_on">مُفعَّل ✓</span>
+        </div>
+      </div>
+    </div>
+    <div class="tip">💡 أرقام بارزة كبيرة في شريحة لوحة المؤشرات (حتى 8)</div>
+    <div class="kgrid" id="kgrid"></div>
+    <button class="badd" style="margin-top:8px" onclick="addKPI()" data-i18n="add_kpi">＋ إضافة مؤشر</button>
+  </div>
+
+  <div class="nbar">
+    <button class="bprev" onclick="goTo(2)" data-i18n="prev">→ السابق</button>
+    <button class="bnext" onclick="goTo(4)" data-i18n="next">التالي ←</button>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════
+     STEP 4: النتائج والخاتمة
+     ══════════════════════════════════════════════════════ -->
+<section class="sec" id="s4">
+  <div class="sh">
+    <h2>✅ <span data-i18n="s5_title">النتائج والخاتمة والتوصيات</span> <span class="stag">5 / 6</span></h2>
+  </div>
+
+  <!-- النتائج -->
+  <div class="card" id="card-results">
+    <div class="ch">
+      <div class="ci">📈</div><h3 data-i18n="main_results">أهم النتائج</h3>
+      <div class="slide-toggle">
+        <div class="tog-wrap on" id="tog-results" onclick="toggleSlide('results')">
+          <div class="tog-dot"></div><span class="tog-lbl" data-i18n="toggle_on">مُفعَّل ✓</span>
+        </div>
+      </div>
+    </div>
+    <div class="dlist" id="dl-results"></div>
+    <button class="badd" onclick="addS('dl-results','نتيجة')" data-i18n="add_result">＋ إضافة نتيجة</button>
+  </div>
+
+  <!-- الخاتمة -->
+  <div class="card" id="card-conclusion">
+    <div class="ch">
+      <div class="ci">✍️</div><h3 data-i18n="conclusion">الخاتمة</h3>
+      <div class="slide-toggle">
+        <div class="tog-wrap on" id="tog-conclusion" onclick="toggleSlide('conclusion')">
+          <div class="tog-dot"></div><span class="tog-lbl" data-i18n="toggle_on">مُفعَّل ✓</span>
+        </div>
+      </div>
+    </div>
+    <div class="field"><textarea id="conclusion" rows="4" data-i18n-ph="ph_conclusion"></textarea></div>
+  </div>
+
+  <!-- التوصيات -->
+  <div class="card" id="card-recommendations">
+    <div class="ch">
+      <div class="ci">📌</div><h3 data-i18n="recommendations">التوصيات</h3>
+      <div class="slide-toggle">
+        <div class="tog-wrap on" id="tog-recommendations" onclick="toggleSlide('recommendations')">
+          <div class="tog-dot"></div><span class="tog-lbl" data-i18n="toggle_on">مُفعَّل ✓</span>
+        </div>
+      </div>
+    </div>
+    <div class="dlist" id="dl-recs"></div>
+    <button class="badd" onclick="addS('dl-recs','توصية')" data-i18n="add_recommendation">＋ إضافة توصية</button>
+  </div>
+
+  <!-- الآفاق -->
+  <div class="card" id="card-future">
+    <div class="ch">
+      <div class="ci">🚀</div><h3 data-i18n="future_work">آفاق البحث</h3>
+      <div class="slide-toggle">
+        <div class="tog-wrap off" id="tog-future" onclick="toggleSlide('future')">
+          <div class="tog-dot"></div><span class="tog-lbl" data-i18n="toggle_off">مُعطَّل</span>
+        </div>
+      </div>
+    </div>
+    <div class="dlist" id="dl-future"></div>
+    <button class="badd" onclick="addS('dl-future','آفق')" data-i18n="add_future">＋ إضافة آفق</button>
+  </div>
+
+  <!-- المراجع -->
+  <div class="card" id="card-references">
+    <div class="ch">
+      <div class="ci">📚</div><h3 data-i18n="references">أبرز المراجع</h3>
+      <div class="slide-toggle">
+        <div class="tog-wrap off" id="tog-references" onclick="toggleSlide('references')">
+          <div class="tog-dot"></div><span class="tog-lbl" data-i18n="toggle_off">مُعطَّل</span>
+        </div>
+      </div>
+    </div>
+    <div class="dlist" id="dl-refs"></div>
+    <button class="badd" onclick="addS('dl-refs','مرجع')" data-i18n="add_ref">＋ إضافة مرجع</button>
+  </div>
+
+  <!-- شريحة الشكر -->
+  <div class="card">
+    <div class="ch">
+      <div class="ci">🙏</div><h3>شريحة الشكر</h3>
+      <div class="slide-toggle">
+        <div class="tog-wrap on" id="tog-thankyou" onclick="toggleSlide('thankyou')">
+          <div class="tog-dot"></div><span class="tog-lbl" data-i18n="toggle_on">مُفعَّل ✓</span>
+        </div>
+      </div>
+    </div>
+    <div class="tip">💡 شريحة "شكراً لحسن استماعكم / Merci pour votre attention" تُولَّد تلقائياً مع بيانات الطالب</div>
+  </div>
+
+  <div class="nbar">
+    <button class="bprev" onclick="goTo(3)" data-i18n="prev">→ السابق</button>
+    <button class="bnext" onclick="goTo(5)" data-i18n="next">التالي ←</button>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════
+     STEP 5: الموديل واللون
+     ══════════════════════════════════════════════════════ -->
+<section class="sec" id="s5">
+  <div class="sh">
+    <h2>🎨 <span data-i18n="s6_title">الموديل واللون</span> <span class="stag">6 / 6</span></h2>
+    <p data-i18n="s6_sub">اختر الموديل أولاً، ثم اللون المناسب</p>
+  </div>
+
+  <div class="card">
+    <div class="ch"><div class="ci">📐</div><h3 data-i18n="model_step_a">الخطوة أ — اختر الموديل</h3></div>
+    <div class="mpick" style="grid-template-columns:1fr 1fr 1fr">
+
+      <!-- CANVA — الافتراضي الجديد -->
+      <label class="mopt">
+        <input type="radio" name="engine" value="canva" checked onchange="onEngineChange()">
+        <div class="mcard" style="position:relative">
+          <div class="mcheck">✓</div>
+          <div style="position:absolute;top:10px;right:10px;background:#C6A03C;color:#07172F;font-size:9px;font-weight:900;padding:2px 8px;border-radius:99px;z-index:2">✨ جديد</div>
+          <div class="mcard-top" style="background:linear-gradient(135deg,#07172F 0%,#1A3A6E 60%,#C6A03C 100%)">
+            <h4 style="color:#fff;font-size:15px">Canva Level</h4>
+            <p style="color:rgba(255,255,255,.75)">سينمائي · 3 عائلات × 8 ألوان · مستوى Canva Pro</p>
+          </div>
+          <div class="mcard-palettes">
+            <span style="background:#07172F;color:#C6A03C;border-color:#07172F">NOIR ذهبي</span>
+            <span style="background:#061A28;color:#00C9A7;border-color:#061A28">VIVID تيل</span>
+            <span style="background:#3A0018;color:#E84393;border-color:#3A0018">VIVID بورغندي</span>
+            <span style="background:#0F2D1E;color:#86BB56;border-color:#0F2D1E">NOIR غابي</span>
+            <span style="background:#12052E;color:#C07AFF;border-color:#12052E">NOIR بنفسجي</span>
+            <span style="background:#1A1A2E;color:#FF6B35;border-color:#1A1A2E">VIVID برتقالي</span>
+            <span style="background:#0A254A;color:#4AB3FF;border-color:#0A254A">MINIMAL ثلجي</span>
+            <span style="background:#2C1A0E;color:#C8861F;border-color:#2C1A0E">NOIR رملي</span>
+          </div>
+          <div class="mcard-count">⚙️ python-pptx · زوايا دائرية · ظلال · 3 عائلات NOIR/VIVID/MINIMAL</div>
+        </div>
+      </label>
+
+      <!-- PREMIUM — Node.js PptxGenJS -->
+      <label class="mopt">
+        <input type="radio" name="engine" value="premium" onchange="onEngineChange()">
+        <div class="mcard">
+          <div class="mcheck">✓</div>
+          <div class="mcard-top" style="background:linear-gradient(135deg,#0A0C12,#C9A84C)">
+            <h4 data-i18n="premium_name">Premium v3 ✨</h4>
+            <p data-i18n="premium_desc">تصاميم عالمية · 3 أنماط فاخرة</p>
+          </div>
+          <div class="mcard-palettes">
+            <span style="background:#0A0C12;color:#C9A84C;border-color:#0A0C12">Noir Académique</span>
+            <span style="background:#040D1E;color:#00D4FF;border-color:#040D1E">Atlas Corporate</span>
+            <span style="background:#1C0E2B;color:#FF5C5C;border-color:#1C0E2B">Sakura Créative</span>
+          </div>
+          <div class="mcard-count" data-i18n="premium_engine">⚙️ PptxGenJS · معماريات سينمائية</div>
+        </div>
+      </label>
+
+      <!-- CLASSIC — المحرك الأصلي -->
+      <label class="mopt">
+        <input type="radio" name="engine" value="classic" onchange="onEngineChange()">
+        <div class="mcard">
+          <div class="mcheck">✓</div>
+          <div class="mcard-top" style="background:linear-gradient(135deg,#1A2540,#2D3E6B)">
+            <h4 style="color:#fff">Classic Academic</h4>
+            <p style="color:rgba(255,255,255,.6)">تقليدي · 3 هياكل × 8 ألوان</p>
+          </div>
+          <div class="mcard-palettes">
+            <span style="background:#07172F;color:#C6A03C;border-color:#07172F">أزرق ذهبي</span>
+            <span style="background:#061A28;color:#00D4AA;border-color:#061A28">تيل</span>
+            <span style="background:#3A0018;color:#F0B8CC;border-color:#3A0018">بورغندي</span>
+            <span style="background:#0F2D1E;color:#86BB56;border-color:#0F2D1E">غابي</span>
+            <span style="background:#12052E;color:#C07AFF;border-color:#12052E">بنفسجي</span>
+            <span>برتقالي</span><span>ثلجي</span><span>رملي</span>
+          </div>
+          <div class="mcard-count" data-i18n="classic_engine">⚙️ python-pptx · 3 هياكل Classic/Bold/Minimal</div>
+        </div>
+      </label>
+
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="ch"><div class="ci">🎨</div><h3 data-i18n="model_step_b">الخطوة ب — اختر اللون</h3></div>
+    <div id="canva-colors-wrap">
+      <div class="cpick classic-colors" id="cpick-canva"></div>
+    </div>
+    <div id="classic-colors-wrap" style="display:none">
+      <div class="cpick classic-colors" id="cpick-classic"></div>
+    </div>
+    <div id="premium-colors-wrap" style="display:none">
+      <div class="cpick premium-colors" id="cpick-premium"></div>
+    </div>
+    <div id="premium-warn" style="display:none;margin:8px 0;padding:9px 13px;background:rgba(255,180,0,.13);border:1px solid rgba(255,180,0,.35);border-radius:8px;font-size:12px;color:#f0c060">
+      ⚠️ <span data-i18n="premium_warn">محرك Premium يتطلب Node.js — قد يتحوّل تلقائياً لمحرك Canva إذا لم يكن متاحاً على الخادم</span>
+    </div>
+    <div class="color-preview" id="color-preview"></div>
+  </div>
+
+  <div class="garea">
+    <button class="bgen" id="bgen" onclick="generate()"><span data-i18n="generate_btn">🚀 إنشاء العرض</span></button>
+    <div class="ghint" data-i18n="generating_hint">⚡ يستغرق التوليد 10–40 ثانية</div>
+  </div>
+  <div class="nbar"><button class="bprev" onclick="goTo(4)" data-i18n="prev">→ السابق</button><div></div></div>
+</section>
+
+</main>
+
+<div class="asbar" id="asbar"><div class="asdot"></div><span id="asbar-msg">تم الحفظ ✓</span></div>
+
+<div class="ov" id="ov">
+  <div class="mbox">
+    <div class="mic mspin" id="mic">⚙️</div>
+    <h3 id="mtitle" data-i18n="modal_title">جاري إنشاء العرض...</h3>
+    <p id="msub" data-i18n="modal_sub">المحرك يبني الشرائح</p>
+    <div class="ptrack" id="ptrack"><div class="pfill" id="pfill"></div></div>
+    <div class="plbl" id="plbl">0%</div>
+    <button id="bcancel" onclick="cancelGen()" style="margin-top:14px;background:none;border:1px solid #ccc;border-radius:8px;padding:6px 20px;font-size:12px;color:#888;cursor:pointer;">✕ إلغاء</button>
+  </div>
+</div>
+
+<script>
+// نظام الترجمة الثلاثي — AR / FR / EN
+const I18N = {
+  ar: {
+    // Header
+    app_title: "مذكرتي Pro",
+    app_subtitle: "منشئ العروض الأكاديمية للجامعات الجزائرية",
+    app_pill: "موديلان · 11 لوناً · ثلاث لغات",
+    demo_btn: "🧪 تعبئة تجريبية",
+    lang_btn: "اللغة",
+
+    // Steps
+    step1: "بيانات الطالب", step2: "خطة الدراسة", step3: "الإشكالية والأهداف",
+    step4: "المنهجية والعينة", step5: "النتائج والخاتمة", step6: "الموديل واللون",
+
+    // Step 1
+    s1_title: "بيانات الطالب والمذكرة", s1_sub: "المعلومات الأساسية للغلاف",
+    student_name: "اسم الطالب / الطالبة", student_id: "رقم التسجيل",
+    major: "التخصص", level: "المستوى",
+    level_m2: "ماستر 2", level_m1: "ماستر 1", level_phd: "دكتوراه", level_lic: "ليسانس",
+    year: "السنة الجامعية", defense_date: "تاريخ المناقشة",
+    university: "الجامعة", faculty: "الكلية / المعهد", department: "القسم",
+    supervisor: "المشرف / المشرفة", co_supervisor: "المشرف المساعد",
+    title_ar: "عنوان المذكرة بالعربية", title_fr: "Titre en français",
+    field_en: "مجال البحث بالإنجليزية", keywords: "الكلمات المفتاحية",
+    required: "مطلوب",
+
+    // Step 2
+    s2_title: "خطة الدراسة", s2_sub: "عناوين الفصول والمباحث — تُعرض في شريحة المقدمة",
+    intro_overview: "لمحة عامة عن الموضوع", intro_approach: "المقاربة النظرية المتبعة (إن وجدت)",
+    chapters: "الفصول والمباحث", chapter_title: "عنوان الفصل",
+    section_title: "عنوان المبحث", add_chapter: "＋ إضافة فصل", add_section: "＋ مبحث",
+    show_intro_slide: "عرض شريحة المقدمة",
+    show_plan_slide: "عرض شريحة خطة الدراسة",
+
+    // Step 3
+    s3_title: "الإشكالية والتساؤلات والأهداف",
+    main_problem: "الإشكالية الرئيسية (لمحة مختصرة للعرض)",
+    main_question: "التساؤل الرئيسي",
+    sub_questions: "التساؤلات الفرعية", hypotheses: "الفرضيات",
+    objectives: "أهداف الدراسة",
+    importance: "أهمية الدراسة (نقاط)",
+    show_problem_slide: "عرض شريحة الإشكالية",
+    show_objectives_slide: "عرض شريحة الأهداف",
+    show_importance_slide: "عرض شريحة الأهمية",
+
+    // Step 4
+    s4_title: "المنهجية والعينة",
+    methodology: "المنهج المتبع (مع تعريف مختصر)", data_source: "مصدر البيانات",
+    sample_type: "نوع العينة", sample_size: "حجم العينة / العدد",
+    tool: "أداة الدراسة", tool_axes: "محاور الأداة (الاستمارة)",
+    spatial_scope: "المجال المكاني (مكان الدراسة)",
+    temporal_scope: "المجال الزماني (مدة الدراسة)",
+    human_scope: "المجال البشري (العينة)",
+    time_period: "الفترة الزمنية", software: "برنامج التحليل",
+    statistical_tests: "الاختبارات الإحصائية",
+    show_methodology_slide: "عرض شريحة المنهجية",
+    kpi_title: "المؤشرات الإحصائية الرئيسية KPI",
+    show_kpi_slide: "عرض شريحة المؤشرات",
+
+    // Step 5
+    s5_title: "النتائج والخاتمة والتوصيات",
+    main_results: "أهم النتائج (نقاط)",
+    conclusion: "الخاتمة المختصرة",
+    recommendations: "التوصيات",
+    future_work: "آفاق البحث",
+    references: "أبرز المراجع",
+    show_results_slide: "عرض شريحة النتائج",
+    show_conclusion_slide: "عرض شريحة الخاتمة",
+    show_recommendations_slide: "عرض شريحة التوصيات",
+    show_future_slide: "عرض شريحة الآفاق",
+    show_thankyou_slide: "عرض شريحة الشكر",
+
+    // Step 6
+    s6_title: "الموديل واللون",
+    s6_sub: "اختر الموديل أولاً، ثم اللون المناسب لتخصصك",
+    model_step_a: "الخطوة أ — اختر الموديل البصري",
+    model_step_b: "الخطوة ب — اختر الخيار اللوني",
+    classic_name: "Classic Academic",
+    classic_desc: "3 هياكل بصرية × 8 خيارات لونية",
+    premium_name: "Premium v3 ✨",
+    premium_desc: "تصاميم عالمية · 3 أنماط فاخرة",
+    classic_engine: "⚙️ المحرك: python-pptx · 3 تخطيطات",
+    premium_engine: "⚙️ المحرك: PptxGenJS · معماريات متميزة",
+    premium_warn: "⚙️ محرك Premium يتطلب Node.js — قد يتحوّل تلقائياً لمحرك Canva إذا لم يكن متاحاً",
+    generate_btn: "🚀 إنشاء العرض الاحترافي",
+    generating_hint: "⚡ يستغرق التوليد 10–40 ثانية",
+
+    // Toggles
+    toggle_on: "مُفعَّل ✓", toggle_off: "مُعطَّل",
+    slide_will_show: "هذه الشريحة ستظهر في العرض",
+    slide_will_hide: "هذه الشريحة لن تظهر في العرض",
+
+    // Nav
+    next: "التالي ←", prev: "→ السابق",
+
+    // Modal
+    modal_title: "جاري إنشاء العرض...",
+    modal_sub: "المحرك يبني الشرائح الاحترافية",
+    modal_ok: "تم الإنشاء بنجاح! 🎉",
+    modal_ok_sub: "عرضك الاحترافي جاهز للتحميل",
+    download_btn: "⬇️ تحميل العرض الاحترافي",
+    new_btn: "🔄 إنشاء عرض جديد",
+
+    // Dynamic lists
+    add_item: "＋ إضافة عنصر",
+    add_question: "＋ إضافة تساؤل",
+    add_hypothesis: "＋ إضافة فرضية",
+    add_objective: "＋ إضافة هدف",
+    add_result: "＋ إضافة نتيجة",
+    add_recommendation: "＋ إضافة توصية",
+    add_test: "＋ إضافة اختبار",
+    add_kpi: "＋ إضافة مؤشر",
+    add_future: "＋ إضافة آفق",
+    add_ref: "＋ إضافة مرجع",
+    add_axis: "＋ إضافة محور",
+
+    // Placeholders
+    ph_student: "رامي بن يوسف",
+    ph_id: "2024-MAG-1234",
+    ph_major: "مالية وإدارة أعمال",
+    ph_year: "2024–2025",
+    ph_university: "جامعة الأمير عبد القادر — قسنطينة",
+    ph_faculty: "كلية العلوم الاقتصادية والتجارية",
+    ph_department: "قسم المالية والمحاسبة",
+    ph_supervisor: "أ.د. سارة كريمي",
+    ph_title_ar: "أثر سياسات التمويل على الأداء المالي للمؤسسات الجزائرية",
+    ph_title_fr: "Impact des politiques de financement...",
+    ph_field_en: "Financial Economics · Corporate Finance",
+    ph_keywords: "هيكل رأس المال، الأداء المالي، بيانات البانل",
+    ph_overview: "يتناول هذا البحث دراسة أثر سياسات التمويل على الأداء المالي...",
+    ph_approach: "المقاربة الكمية والوصفية التحليلية",
+    ph_problem: "تواجه المؤسسات الاقتصادية الجزائرية تحديات هيكلية...",
+    ph_question: "ما أثر سياسات التمويل على الأداء المالي للمؤسسات الجزائرية؟",
+    ph_methodology: "المنهج الوصفي التحليلي: يهدف إلى وصف الظاهرة وتحليل أبعادها",
+    ph_sample_type: "عينة عشوائية طبقية",
+    ph_sample_size: "120 مفردة",
+    ph_tool: "الاستمارة / المقابلة / الوثائق",
+    ph_spatial: "ولاية قسنطينة — المؤسسة الاقتصادية X",
+    ph_temporal: "2020–2024 (4 سنوات)",
+    ph_human: "موظفو المؤسسة (120 مفردة)",
+    ph_kpi_label: "اسم المؤشر",
+    ph_kpi_value: "0.94",
+    ph_conclusion: "خلص البحث إلى وجود علاقة إيجابية معنوية...",
+    ph_chapter: "الفصل الأول: الإطار النظري",
+    ph_section: "المبحث الأول: مفهوم التمويل",
+    saved: "تم الحفظ التلقائي ✓",
+    demo_loaded: "تم تحميل البيانات التجريبية ✓",
+  },
+
+  fr: {
+    app_title: "Mémoire Pro",
+    app_subtitle: "Générateur de présentations académiques pour universités algériennes",
+    app_pill: "2 modèles · 11 couleurs · 3 langues",
+    demo_btn: "🧪 Données de test",
+    lang_btn: "Langue",
+    step1: "Informations", step2: "Plan d'étude", step3: "Problématique & Objectifs",
+    step4: "Méthodologie", step5: "Résultats & Conclusion", step6: "Modèle & Couleur",
+    s1_title: "Informations de l'étudiant", s1_sub: "Informations de base pour la page de garde",
+    student_name: "Nom de l'étudiant(e)", student_id: "N° d'inscription",
+    major: "Spécialité", level: "Niveau",
+    level_m2: "Master 2", level_m1: "Master 1", level_phd: "Doctorat", level_lic: "Licence",
+    year: "Année universitaire", defense_date: "Date de soutenance",
+    university: "Université", faculty: "Faculté / Institut", department: "Département",
+    supervisor: "Directeur de mémoire", co_supervisor: "Co-directeur",
+    title_ar: "Titre en arabe", title_fr: "Titre en français",
+    field_en: "Domaine de recherche (anglais)", keywords: "Mots-clés",
+    required: "Requis",
+    s2_title: "Plan d'étude", s2_sub: "Titres des chapitres et sections",
+    intro_overview: "Aperçu général du sujet", intro_approach: "Approche théorique (si applicable)",
+    chapters: "Chapitres et sections", chapter_title: "Titre du chapitre",
+    section_title: "Titre de la section", add_chapter: "＋ Ajouter chapitre", add_section: "＋ Section",
+    show_intro_slide: "Afficher la diapositive d'introduction",
+    show_plan_slide: "Afficher la diapositive du plan",
+    s3_title: "Problématique, Questions & Objectifs",
+    main_problem: "Problématique centrale (résumé pour la présentation)",
+    main_question: "Question principale",
+    sub_questions: "Questions secondaires", hypotheses: "Hypothèses",
+    objectives: "Objectifs de l'étude",
+    importance: "Importance de l'étude (en points)",
+    show_problem_slide: "Afficher la diapositive de problématique",
+    show_objectives_slide: "Afficher la diapositive des objectifs",
+    show_importance_slide: "Afficher la diapositive de l'importance",
+    s4_title: "Méthodologie & Échantillon",
+    methodology: "Méthode utilisée (avec définition)", data_source: "Source des données",
+    sample_type: "Type d'échantillon", sample_size: "Taille de l'échantillon",
+    tool: "Outil de recherche", tool_axes: "Axes du questionnaire",
+    spatial_scope: "Champ spatial (lieu de l'étude)",
+    temporal_scope: "Champ temporel (durée de l'étude)",
+    human_scope: "Champ humain (population)",
+    time_period: "Période d'étude", software: "Logiciel d'analyse",
+    statistical_tests: "Tests statistiques",
+    show_methodology_slide: "Afficher la diapositive de méthodologie",
+    kpi_title: "Indicateurs statistiques clés (KPI)",
+    show_kpi_slide: "Afficher le tableau de bord KPI",
+    s5_title: "Résultats, Conclusion & Recommandations",
+    main_results: "Principaux résultats (en points)",
+    conclusion: "Conclusion (résumé)",
+    recommendations: "Recommandations",
+    future_work: "Perspectives de recherche",
+    references: "Références principales",
+    show_results_slide: "Afficher les résultats",
+    show_conclusion_slide: "Afficher la conclusion",
+    show_recommendations_slide: "Afficher les recommandations",
+    show_future_slide: "Afficher les perspectives",
+    show_thankyou_slide: "Afficher le remerciement",
+    s6_title: "Modèle et Couleur",
+    s6_sub: "Choisissez d'abord le modèle, puis la couleur",
+    model_step_a: "Étape A — Choisir le modèle",
+    model_step_b: "Étape B — Choisir la couleur",
+    classic_name: "Classic Academic",
+    classic_desc: "3 architectures × 8 palettes",
+    premium_name: "Premium v3 ✨",
+    premium_desc: "Designs mondiaux · 3 styles exclusifs",
+    classic_engine: "⚙️ Moteur: python-pptx · 3 mises en page",
+    premium_engine: "⚙️ Moteur: PptxGenJS · architectures distinctes",
+    premium_warn: "⚙️ Premium nécessite Node.js — bascule automatique vers Canva si indisponible",
+    generate_btn: "🚀 Générer la présentation",
+    generating_hint: "⚡ La génération prend 10–40 secondes",
+    toggle_on: "Activé ✓", toggle_off: "Désactivé",
+    slide_will_show: "Cette diapositive apparaîtra dans la présentation",
+    slide_will_hide: "Cette diapositive n'apparaîtra pas",
+    next: "Suivant →", prev: "← Précédent",
+    modal_title: "Génération en cours...",
+    modal_sub: "Le moteur construit vos diapositives",
+    modal_ok: "Génération réussie! 🎉",
+    modal_ok_sub: "Votre présentation est prête",
+    download_btn: "⬇️ Télécharger la présentation",
+    new_btn: "🔄 Nouvelle présentation",
+    add_item: "＋ Ajouter", add_question: "＋ Ajouter question",
+    add_hypothesis: "＋ Ajouter hypothèse", add_objective: "＋ Ajouter objectif",
+    add_result: "＋ Ajouter résultat", add_recommendation: "＋ Ajouter recommandation",
+    add_test: "＋ Ajouter test", add_kpi: "＋ Ajouter indicateur",
+    add_future: "＋ Ajouter perspective", add_ref: "＋ Ajouter référence",
+    add_axis: "＋ Ajouter axe", add_chapter: "＋ Ajouter chapitre", add_section: "＋ Section",
+    ph_student:"Ahmed Benali", ph_id:"2024-MAG-1234", ph_major:"Finance et management",
+    ph_year:"2024–2025", ph_university:"Université Emir Abdelkader — Constantine",
+    ph_faculty:"Faculté des sciences économiques", ph_department:"Département de finance",
+    ph_supervisor:"Pr. Sara Karimi", ph_title_ar:"عنوان المذكرة بالعربية",
+    ph_title_fr:"Impact des politiques de financement sur la performance financière",
+    ph_field_en:"Financial Economics · Corporate Finance",
+    ph_keywords:"Structure du capital, performance financière, données de panel",
+    ph_overview:"Cette recherche examine l'impact des politiques de financement...",
+    ph_approach:"Approche quantitative et descriptive analytique",
+    ph_problem:"Les entreprises algériennes font face à des défis structurels...",
+    ph_question:"Quel est l'impact des politiques de financement sur la performance?",
+    ph_methodology:"Méthode descriptive analytique: vise à décrire et analyser le phénomène",
+    ph_sample_type:"Échantillon aléatoire stratifié",
+    ph_sample_size:"120 individus",
+    ph_tool:"Questionnaire / Entretien / Documents",
+    ph_spatial:"Wilaya de Constantine — Entreprise X",
+    ph_temporal:"2020–2024 (4 ans)",
+    ph_human:"Employés de l'entreprise (120 individus)",
+    ph_kpi_label:"Nom de l'indicateur", ph_kpi_value:"0.94",
+    ph_conclusion:"La recherche conclut à l'existence d'une relation positive significative...",
+    ph_chapter:"Chapitre 1: Cadre théorique", ph_section:"Section 1: Concept du financement",
+    saved:"Sauvegarde automatique ✓", demo_loaded:"Données de test chargées ✓",
+  },
+
+  en: {
+    app_title: "Mémoire Pro",
+    app_subtitle: "Academic Presentation Generator for Algerian Universities",
+    app_pill: "2 models · 11 colors · 3 languages",
+    demo_btn: "🧪 Load Demo Data",
+    lang_btn: "Language",
+    step1: "Student Info", step2: "Study Plan", step3: "Problem & Objectives",
+    step4: "Methodology", step5: "Results & Conclusion", step6: "Model & Color",
+    s1_title: "Student & Thesis Information", s1_sub: "Basic information for the cover page",
+    student_name: "Student Name", student_id: "Registration Number",
+    major: "Specialization", level: "Level",
+    level_m2: "Master 2", level_m1: "Master 1", level_phd: "PhD", level_lic: "Bachelor",
+    year: "Academic Year", defense_date: "Defense Date",
+    university: "University", faculty: "Faculty / Institute", department: "Department",
+    supervisor: "Thesis Supervisor", co_supervisor: "Co-supervisor",
+    title_ar: "Title in Arabic", title_fr: "Title in French",
+    field_en: "Research Field (English)", keywords: "Keywords",
+    required: "Required",
+    s2_title: "Study Plan", s2_sub: "Chapter and section titles for the introduction slide",
+    intro_overview: "General overview of the topic", intro_approach: "Theoretical approach (if applicable)",
+    chapters: "Chapters & Sections", chapter_title: "Chapter title",
+    section_title: "Section title", add_chapter: "＋ Add Chapter", add_section: "＋ Section",
+    show_intro_slide: "Show introduction slide",
+    show_plan_slide: "Show study plan slide",
+    s3_title: "Research Problem, Questions & Objectives",
+    main_problem: "Main research problem (brief for presentation)",
+    main_question: "Main research question",
+    sub_questions: "Sub-questions", hypotheses: "Hypotheses",
+    objectives: "Study objectives",
+    importance: "Importance of the study (bullet points)",
+    show_problem_slide: "Show problem slide",
+    show_objectives_slide: "Show objectives slide",
+    show_importance_slide: "Show importance slide",
+    s4_title: "Methodology & Sample",
+    methodology: "Research method (with brief definition)", data_source: "Data source",
+    sample_type: "Sample type", sample_size: "Sample size / Number",
+    tool: "Research tool", tool_axes: "Questionnaire axes / dimensions",
+    spatial_scope: "Spatial scope (study location)",
+    temporal_scope: "Temporal scope (study duration)",
+    human_scope: "Human scope (population/sample)",
+    time_period: "Study period", software: "Analysis software",
+    statistical_tests: "Statistical tests",
+    show_methodology_slide: "Show methodology slide",
+    kpi_title: "Key Statistical Indicators (KPI)",
+    show_kpi_slide: "Show KPI dashboard",
+    s5_title: "Results, Conclusion & Recommendations",
+    main_results: "Main results (bullet points)",
+    conclusion: "Brief conclusion",
+    recommendations: "Recommendations",
+    future_work: "Future research perspectives",
+    references: "Key references",
+    show_results_slide: "Show results slide",
+    show_conclusion_slide: "Show conclusion slide",
+    show_recommendations_slide: "Show recommendations slide",
+    show_future_slide: "Show future perspectives slide",
+    show_thankyou_slide: "Show thank you slide",
+    s6_title: "Model & Color",
+    s6_sub: "Choose the model first, then the color for your field",
+    model_step_a: "Step A — Choose Visual Model",
+    model_step_b: "Step B — Choose Color Palette",
+    classic_name: "Classic Academic",
+    classic_desc: "3 visual structures × 8 color palettes",
+    premium_name: "Premium v3 ✨",
+    premium_desc: "World-class designs · 3 exclusive styles",
+    classic_engine: "⚙️ Engine: python-pptx · 3 layouts",
+    premium_engine: "⚙️ Engine: PptxGenJS · distinct architectures",
+    premium_warn: "⚙️ Premium requires Node.js — auto-fallback to Canva if unavailable",
+    generate_btn: "🚀 Generate Professional Presentation",
+    generating_hint: "⚡ Generation takes 10–40 seconds",
+    toggle_on: "Enabled ✓", toggle_off: "Disabled",
+    slide_will_show: "This slide will appear in the presentation",
+    slide_will_hide: "This slide will not appear",
+    next: "Next →", prev: "← Previous",
+    modal_title: "Generating presentation...",
+    modal_sub: "The engine is building your professional slides",
+    modal_ok: "Successfully generated! 🎉",
+    modal_ok_sub: "Your professional presentation is ready",
+    download_btn: "⬇️ Download Presentation",
+    new_btn: "🔄 Create New Presentation",
+    add_item: "＋ Add item", add_question: "＋ Add question",
+    add_hypothesis: "＋ Add hypothesis", add_objective: "＋ Add objective",
+    add_result: "＋ Add result", add_recommendation: "＋ Add recommendation",
+    add_test: "＋ Add test", add_kpi: "＋ Add indicator",
+    add_future: "＋ Add perspective", add_ref: "＋ Add reference",
+    add_axis: "＋ Add axis", add_chapter: "＋ Add chapter", add_section: "＋ Section",
+    ph_student:"Ahmed Benali", ph_id:"2024-MAG-1234", ph_major:"Finance & Management",
+    ph_year:"2024–2025", ph_university:"Emir Abdelkader University — Constantine",
+    ph_faculty:"Faculty of Economic Sciences", ph_department:"Department of Finance",
+    ph_supervisor:"Prof. Sara Karimi", ph_title_ar:"العنوان بالعربية",
+    ph_title_fr:"Impact des politiques de financement...",
+    ph_field_en:"Financial Economics · Corporate Finance",
+    ph_keywords:"Capital structure, financial performance, panel data",
+    ph_overview:"This research examines the impact of financing policies...",
+    ph_approach:"Quantitative and descriptive analytical approach",
+    ph_problem:"Algerian enterprises face multiple structural challenges...",
+    ph_question:"What is the impact of financing policies on financial performance?",
+    ph_methodology:"Descriptive analytical method: aims to describe and analyze the phenomenon",
+    ph_sample_type:"Stratified random sample",
+    ph_sample_size:"120 individuals",
+    ph_tool:"Questionnaire / Interview / Documents",
+    ph_spatial:"Constantine Province — Enterprise X",
+    ph_temporal:"2020–2024 (4 years)",
+    ph_human:"Enterprise employees (120 individuals)",
+    ph_kpi_label:"Indicator name", ph_kpi_value:"0.94",
+    ph_conclusion:"The research concludes that there is a significant positive relationship...",
+    ph_chapter:"Chapter 1: Theoretical Framework", ph_section:"Section 1: Financing concept",
+    saved:"Auto-saved ✓", demo_loaded:"Demo data loaded ✓",
+  }
+};
+
+window.I18N = I18N;
+window.currentLang = 'ar';
+
+function t(key) {
+  return (I18N[currentLang] || I18N.ar)[key] || I18N.ar[key] || key;
+}
+
+function setLang(lang) {
+  currentLang = lang;
+  document.documentElement.lang = lang;
+  document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
+  document.body.className = lang === 'ar' ? 'rtl' : 'ltr';
+  applyTranslations();
+  localStorage.setItem('mp_lang', lang);
+}
+
+function applyTranslations() {
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.getAttribute('data-i18n');
+    const attr = el.getAttribute('data-i18n-attr');
+    if (attr) el.setAttribute(attr, t(key));
+    else el.textContent = t(key);
+  });
+  document.querySelectorAll('[data-i18n-ph]').forEach(el => {
+    el.placeholder = t(el.getAttribute('data-i18n-ph'));
+  });
+}
+
+window.t = t;
+window.setLang = setLang;
+window.applyTranslations = applyTranslations;
+
+// ═══════════════════════════════════════════════════════
+// LANG SWITCHER
+// ═══════════════════════════════════════════════════════
+function setLang(lang) {
+  currentLang = lang;
+  document.documentElement.lang = lang;
+  document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
+  document.body.className = lang === 'ar' ? '' : 'ltr';
+  ['ar','fr','en'].forEach(l => document.getElementById('lb-'+l)?.classList.toggle('active', l===lang));
+  applyTranslations();
+  localStorage.setItem('mp_lang', lang);
+}
+
+// ═══════════════════════════════════════════════════════
+// SLIDE TOGGLES
+// ═══════════════════════════════════════════════════════
+const slideStates = {
+  intro:true, plan:true, problem:true, objectives:true, importance:true,
+  methodology:true, kpi:true, results:true, conclusion:true,
+  recommendations:true, future:false, references:false, thankyou:true
+};
+
+function toggleSlide(id) {
+  slideStates[id] = !slideStates[id];
+  const tog = document.getElementById('tog-'+id);
+  const card = document.getElementById('card-'+id);
+  const on = slideStates[id];
+  if (tog) {
+    tog.className = 'tog-wrap ' + (on ? 'on' : 'off');
+    const lbl = tog.querySelector('.tog-lbl');
+    if (lbl) { lbl.setAttribute('data-i18n', on ? 'toggle_on' : 'toggle_off'); lbl.textContent = t(on ? 'toggle_on' : 'toggle_off'); }
+  }
+  if (card) card.classList.toggle('slide-disabled', !on);
+}
+
+// ═══════════════════════════════════════════════════════
+// PALETTES
+// ═══════════════════════════════════════════════════════
+const CLASSIC_PALETTES = [
+  {id:'navy_gold',    name:'أزرق ملكي ذهبي',   desc:'كلاسيكي أكاديمي — العلوم الإنسانية والقانون',     bg1:'#07172F',bg2:'#0E274D',ac:'#C6A03C',bars:['#C6A03C','#1A4072','#E8C97B','#2A5598']},
+  {id:'dark_teal',    name:'تيل داكن',          desc:'عصري — العلوم الطبيعية والتقنية',                  bg1:'#061A28',bg2:'#044E6E',ac:'#00D4AA',bars:['#00D4AA','#044E6E','#0993C3','#67E8D3']},
+  {id:'burgundy',     name:'بورغندي',            desc:'فاخر — الأدب والتاريخ والفلسفة',                  bg1:'#3A0018',bg2:'#6B1537',ac:'#F0B8CC',bars:['#F0B8CC','#6B1537','#CC3D73','#FAD4E2']},
+  {id:'forest',       name:'أخضر غابي',         desc:'طبيعي — البيئة والزراعة والبيولوجيا',             bg1:'#0F2D1E',bg2:'#1E4D36',ac:'#86BB56',bars:['#86BB56','#1E4D36','#4A996B','#B4D984']},
+  {id:'midnight_purple',name:'بنفسجي ليلي',    desc:'إبداعي — التعليم والسيكولوجيا',                   bg1:'#12052E',bg2:'#2D106B',ac:'#C07AFF',bars:['#C07AFF','#2D106B','#7B3FE0','#DDB3FF']},
+  {id:'charcoal_orange',name:'فحمي برتقالي',   desc:'جريء — الإدارة والهندسة',                         bg1:'#1A1A2E',bg2:'#2D2D44',ac:'#FF6B35',bars:['#FF6B35','#2D2D44','#FFA070','#E54E1A']},
+  {id:'ice_blue',     name:'أزرق ثلجي',        desc:'نظيف — الاقتصاد والمالية والإحصاء',               bg1:'#0A254A',bg2:'#1A4A8A',ac:'#4AB3FF',bars:['#4AB3FF','#1A4A8A','#8ED0FF','#0A254A']},
+  {id:'sand_gold',    name:'ذهبي رملي',         desc:'دافئ — الشريعة والعلوم الإسلامية',               bg1:'#2C1A0E',bg2:'#5C3D20',ac:'#C8861F',bars:['#C8861F','#5C3D20','#E8B964','#2C1A0E']},
+];
+const PREMIUM_PALETTES = [
+  {id:'noir',  name:'Noir Académique',desc:'أكاديمي فاخر — ذهبي داكن · Palatino',bg1:'#0A0C12',bg2:'#131620',ac:'#C9A84C',bars:['#C9A84C','#9BA8B5','#E8C97A','#5A6B7A']},
+  {id:'atlas', name:'Atlas Corporate',desc:'استشاري — سيان · McKinsey style',    bg1:'#040D1E',bg2:'#082040',ac:'#00D4FF',bars:['#00D4FF','#FF6B00','#7AEAFF','#0A4A8A']},
+  {id:'sakura',name:'Sakura Créative',desc:'إبداعي — مرجاني · توكيو ستوديو',    bg1:'#1C0E2B',bg2:'#2D1B45',ac:'#FF5C5C',bars:['#FF5C5C','#8B5CF6','#FFAAAA','#4C1D80']},
+];
+
+// Canva palettes = same as Classic palettes (same 8 colors, new engine)
+const CANVA_PALETTES = CLASSIC_PALETTES;
+
+(function buildPickers(){
+  function renderPalettes(containerId, palettes, checked0=false) {
+    const g = document.getElementById(containerId);
+    if (!g) return;
+    g.innerHTML = palettes.map((p,i) => `
+      <label class="copt">
+        <input type="radio" name="palette" value="${p.id}" ${(i===0&&checked0)?'checked':''} onchange="onPaletteChange()">
+        <div class="ccard">
+          <div class="ccard-swatch" style="background:linear-gradient(135deg,${p.bg1},${p.bg2});height:${palettes.length<=3?'65':'50'}px">
+            <div style="display:flex;gap:3px;align-items:flex-end">${p.bars.map((c,j)=>`<div style="width:${palettes.length<=3?13:9}px;height:${[15,10,12,8][j]}px;background:${c};border-radius:2px"></div>`).join('')}</div>
+            <div class="ccard-chk">✓</div>
+          </div>
+          <div class="ccard-info"><div class="ccard-name" style="color:${p.ac}">${p.name}</div><div class="ccard-desc">${p.desc}</div></div>
+        </div>
+      </label>`).join('');
+  }
+  renderPalettes('cpick-canva',   CANVA_PALETTES,   true);
+  renderPalettes('cpick-classic', CLASSIC_PALETTES, false);
+  renderPalettes('cpick-premium', PREMIUM_PALETTES, false);
+  onPaletteChange();
+})();
+
+// onEngineChange is defined below (async version with Node.js check)
+
+function onPaletteChange(){
+  const eng=document.querySelector('input[name="engine"]:checked')?.value||'canva';
+  const palMap = {canva:CANVA_PALETTES, classic:CLASSIC_PALETTES, premium:PREMIUM_PALETTES};
+  const all = palMap[eng] || CANVA_PALETTES;
+  const sel = document.querySelector('input[name="palette"]:checked')?.value;
+  const p   = all.find(x=>x.id===sel) || all[0];
+  if(!p) return;
+  const prev = document.getElementById('color-preview');
+  prev.style.background=`linear-gradient(135deg,${p.bg1},${p.bg2})`;
+  const fam = eng==='canva' ? (
+    ['navy_gold','forest','midnight_purple','sand_gold'].includes(p.id) ? 'NOIR' :
+    ['dark_teal','charcoal_orange','burgundy'].includes(p.id) ? 'VIVID' : 'MINIMAL'
+  ) : '';
+  const famBadge = fam ? `<span style="background:rgba(255,255,255,.15);padding:1px 6px;border-radius:99px;font-size:9px;font-weight:700">${fam}</span>` : '';
+  prev.innerHTML=`<div style="display:flex;gap:3px;align-items:flex-end">${p.bars.map((c,j)=>`<div style="width:11px;height:${[17,11,14,9][j]}px;background:${c};border-radius:2px"></div>`).join('')}</div>
+  <div style="color:#fff;font-size:11px;font-weight:700;margin-right:8px">${p.name}</div>
+  ${famBadge}
+  <div style="color:rgba(255,255,255,.6);font-size:9px;margin-right:auto">${p.desc}</div>`;
+}
+
+// ═══════════════════════════════════════════════════════
+// NAVIGATION
+// ═══════════════════════════════════════════════════════
+let cur=0;
+function goTo(n){
+  document.querySelector('.sec.active')?.classList.remove('active');
+  document.querySelector('.sb.active')?.classList.remove('active');
+  document.getElementById('s'+n).classList.add('active');
+  document.getElementById('sn'+n).classList.add('active');
+  for(let i=0;i<n;i++) document.getElementById('sn'+i).classList.add('done');
+  cur=n;
+  document.getElementById('pbar').style.setProperty('--p',(n/5*100)+'%');
+  window.scrollTo({top:0,behavior:'smooth'});
+  autoSave();
+}
+
+function validate0(){
+  const fields=[['studentName','fld-sn'],['major','fld-mj'],['university','fld-uni'],['supervisor','fld-sup'],['titleAr','fld-ta']];
+  let ok=true;
+  fields.forEach(([id,fid])=>{
+    const el=document.getElementById(id),fc=document.getElementById(fid);
+    if(!el?.value.trim()){fc?.classList.add('has-err');el?.classList.add('ferr');ok=false;}
+    else{fc?.classList.remove('has-err');el?.classList.remove('ferr');}
+  });
+  if(!ok){document.querySelector('.has-err input,.has-err textarea')?.focus();return;}
+  goTo(1);
+}
+document.addEventListener('input',e=>{
+  if(e.target.classList.contains('ferr')){e.target.classList.remove('ferr');e.target.closest('.field')?.classList.remove('has-err');}
+});
+
+// ═══════════════════════════════════════════════════════
+// CHAPTER TREE
+// ═══════════════════════════════════════════════════════
+function addChapter(){
+  const tree=document.getElementById('ctree');
+  const n=tree.querySelectorAll('.cnode').length+1;
+  const node=document.createElement('div'); node.className='cnode';
+  node.innerHTML=`
+    <div class="cnode-hdr">
+      <div class="cnode-icon">F${n}</div>
+      <input type="text" placeholder="${t('chapter_title')} ${n}">
+      <button class="cnode-del" onclick="this.closest('.cnode').remove();reNumChapters()">×</button>
+    </div>
+    <div class="cnode-subs"></div>
+    <div style="padding:0 10px 8px">
+      <button class="add-section-btn" onclick="addSection(this)">${t('add_section')}</button>
+    </div>`;
+  tree.appendChild(node);
+}
+
+function addSection(btn){
+  const subs=btn.closest('.cnode').querySelector('.cnode-subs');
+  const n=subs.querySelectorAll('.snode').length+1;
+  const s=document.createElement('div'); s.className='snode';
+  s.innerHTML=`<div class="snode-dot"></div><input type="text" placeholder="${t('section_title')} ${n}"><button class="snode-del" onclick="this.closest('.snode').remove()">×</button>`;
+  subs.appendChild(s);
+}
+
+function reNumChapters(){
+  document.querySelectorAll('.cnode-icon').forEach((el,i)=>el.textContent='F'+(i+1));
+}
+
+function getChapters(){
+  return Array.from(document.querySelectorAll('#ctree .cnode')).map(node=>{
+    const title=node.querySelector('.cnode-hdr input')?.value.trim()||'';
+    const sections=Array.from(node.querySelectorAll('.snode input')).map(i=>i.value.trim()).filter(Boolean);
+    return{title,sections};
+  }).filter(c=>c.title);
+}
+
+// ═══════════════════════════════════════════════════════
+// DYNAMIC LISTS
+// ═══════════════════════════════════════════════════════
+function addS(lid,ph){
+  const l=document.getElementById(lid),n=l.querySelectorAll('.ditem').length+1;
+  const d=document.createElement('div'); d.className='ditem';
+  d.innerHTML=`<div class="dn">${n}</div><div class="df"><input type="text" placeholder="${ph} ${n}..."></div><button class="brm" onclick="rmItem(this)">×</button>`;
+  l.appendChild(d);
+}
+function rmItem(btn){const item=btn.closest('.ditem'),l=item.parentElement;item.remove();l.querySelectorAll('.dn').forEach((el,i)=>el.textContent=i+1);}
+function getL(lid){return Array.from(document.querySelectorAll(`#${lid} .df input`)).map(i=>i.value.trim()).filter(Boolean);}
+
+function addKPI(){
+  const g=document.getElementById('kgrid');
+  const c=document.createElement('div'); c.className='kcard';
+  c.innerHTML=`<button class="kdel" onclick="this.closest('.kcard').remove()">×</button><input class="klbl" type="text" placeholder="${t('ph_kpi_label')}"><input class="kval" type="text" placeholder="${t('ph_kpi_value')}" inputmode="decimal"><div class="kval-hint">⚠️ القيمة يجب أن تكون رقماً أو نصاً مختصراً مثل: 87% أو 0.94 أو 1200</div>`;
+  // تحقق حي: تحذير إذا حقل القيمة فارغ أو غير منطقي
+  const valInput=c.querySelector('.kval');
+  const lblInput=c.querySelector('.klbl');
+  function kpiValidate(){
+    const v=valInput.value.trim(), l=lblInput.value.trim();
+    const filled = v.length>0 && l.length>0;
+    const suspicious = v.length>30; // قيمة طويلة جداً — ربما خطأ
+    c.classList.toggle('kpi-warn', filled && suspicious);
+  }
+  valInput.addEventListener('input', kpiValidate);
+  lblInput.addEventListener('input', kpiValidate);
+  g.appendChild(c);
+}
+function getKPIs(){return Array.from(document.querySelectorAll('#kgrid .kcard')).map(c=>{const[l,v]=c.querySelectorAll('input');return{label:l?.value.trim()||'',value:v?.value.trim()||''};}).filter(k=>k.label&&k.value);}
+
+// ═══════════════════════════════════════════════════════
+// COLLECT
+// ═══════════════════════════════════════════════════════
+function collect(){
+  const v=id=>document.getElementById(id)?.value.trim()||'';
+  const eng=document.querySelector('input[name="engine"]:checked')?.value||'canva';
+  const theme=document.querySelector('input[name="palette"]:checked')?.value||(eng==='classic'?'navy_gold':'noir');
+  return{
+    studentName:v('studentName'),studentId:v('studentId'),major:v('major'),
+    level:document.getElementById('level').value,year:v('year'),
+    university:v('university'),faculty:v('faculty'),department:v('department'),
+    supervisor:v('supervisor'),coSupervisor:v('coSupervisor'),
+    titleAr:v('titleAr'),titleFr:v('titleFr'),fieldEn:v('fieldEn'),keywords:v('keywords'),
+    defenseDate:v('defenseDate'),
+    engine:eng, theme, lang:currentLang,
+    // Slide visibility flags
+    slides: {...slideStates},
+    // Step 1
+    introOverview:v('introOverview'), introApproach:v('introApproach'),
+    chapters:getChapters(),
+    // Step 2
+    mainProblem:v('mainProblem'), mainQuestion:v('mainQuestion'),
+    subQuestions:getL('dl-subQ'), hypotheses:getL('dl-hyp'),
+    objectives:getL('dl-obj'), importance:getL('dl-importance'),
+    // Step 3
+    methodology:v('methodology'), dataSource:v('dataSource'),
+    sampleType:v('sampleType'), sampleSize:v('sampleSize'),
+    tool:v('tool'), toolAxes:getL('dl-axes'),
+    spatialScope:v('spatialScope'), temporalScope:v('temporalScope'), humanScope:v('humanScope'),
+    timePeriod:v('timePeriod'), software:v('software'),
+    statisticalTests:getL('dl-tests'), stats:getKPIs(),
+    // Step 4
+    mainResults:getL('dl-results'), generalConclusion:v('conclusion'),
+    recommendations:getL('dl-recs'), futureWork:getL('dl-future'),
+    references:getL('dl-refs'),
+  };
+}
+
+// ═══════════════════════════════════════════════════════
+// DEMO DATA
+// ═══════════════════════════════════════════════════════
+function fillDemo(){
+  const sv=(id,v)=>{const el=document.getElementById(id);if(el)el.value=v;};
+  sv('studentName','رامي بن يوسف'); sv('studentId','2024-MAG-0312');
+  sv('major','مالية وإدارة أعمال'); sv('year','2024–2025');
+  sv('university','جامعة الأمير عبد القادر للعلوم الإسلامية — قسنطينة');
+  sv('faculty','كلية العلوم الاقتصادية والتجارية'); sv('department','قسم المالية والمحاسبة');
+  sv('supervisor','أ.د. سارة كريمي');
+  sv('titleAr','أثر سياسات التمويل على الأداء المالي للمؤسسات الجزائرية — دراسة قياسية 2015–2023');
+  sv('titleFr','Impact des politiques de financement sur la performance financière des entreprises algériennes');
+  sv('fieldEn','Financial Economics · Corporate Finance');
+  sv('keywords','هيكل رأس المال، الأداء المالي، الرفع المالي، بيانات البانل');
+  sv('defenseDate','2025-06-15');
+  sv('introOverview','يتناول هذا البحث دراسة أثر سياسات التمويل على الأداء المالي للمؤسسات الاقتصادية الجزائرية خلال الفترة 2015–2023، مستخدماً بيانات بانل لعينة من 48 مؤسسة.');
+  sv('introApproach','المقاربة الكمية القياسية باستخدام نماذج البانل');
+  sv('mainProblem','تواجه المؤسسات الاقتصادية الجزائرية تحديات هيكلية في ضبط سياسات التمويل، مما يؤثر على أدائها المالي وقدرتها التنافسية.');
+  sv('mainQuestion','ما أثر سياسات التمويل على الأداء المالي للمؤسسات الجزائرية خلال الفترة 2015–2023؟');
+  sv('methodology','المنهج الوصفي التحليلي: يهدف إلى وصف الظاهرة وتحليل العلاقات بين المتغيرات، مدعوماً بأسلوب بيانات البانل');
+  sv('dataSource','قوائم مالية سنوية معتمدة');
+  sv('sampleType','عينة عشوائية طبقية');
+  sv('sampleSize','48 مؤسسة × 9 سنوات = 432 مشاهدة');
+  sv('tool','بيانات ثانوية — قوائم مالية');
+  sv('spatialScope','ولايات شمال الجزائر — 48 مؤسسة اقتصادية');
+  sv('temporalScope','2015 — 2023 (9 سنوات)');
+  sv('humanScope','مؤسسات القطاعين العام والخاص');
+  sv('software','Stata 17 · EViews 12');
+  sv('conclusion','خلص البحث إلى وجود أثر معنوي وإيجابي لسياسات التمويل المتوازنة على الأداء المالي للمؤسسات الجزائرية، مع تأكيد الدور الوسيط للحوكمة المؤسسية.');
+
+  // Dynamic lists
+  const lists={
+    'dl-subQ':['ما طبيعة العلاقة بين هيكل رأس المال ومعدل العائد على الأصول ROA؟','هل يؤثر مستوى الرفع المالي على سيولة المؤسسة؟','كيف تنعكس سياسة التمويل على الملاءة المالية طويلة الأجل؟'],
+    'dl-hyp':['H₁: يوجد أثر إيجابي دال لهيكل التمويل على ROA','H₂: يوجد أثر سلبي للرفع المالي المرتفع على السيولة','H₃: للحوكمة المؤسسية دور وسيط'],
+    'dl-obj':['تشخيص العلاقة بين هيكل التمويل ومؤشرات الأداء المالي','قياس أثر الرفع المالي على معدلات الربحية والسيولة','مقارنة سياسات التمويل بين القطاعين العام والخاص'],
+    'dl-importance':['سد فجوة معرفية في أدبيات التمويل المؤسسي الجزائري','تقديم توصيات عملية لصانعي القرار','الإسهام في تطوير منهجية البحث القياسي الجزائري'],
+    'dl-tests':['اختبار Hausman (ثابت/عشوائي)','اختبار VIF للتعددية الخطية','اختبار Breush-Pagan للتباين المتغير'],
+    'dl-axes':['المحور الأول: هيكل رأس المال ومصادر التمويل','المحور الثاني: مؤشرات الأداء المالي','المحور الثالث: عوامل الحوكمة المؤسسية'],
+    'dl-results':['يوجد أثر معنوي وإيجابي لهيكل التمويل على ROA عند مستوى 1%','ارتفاع ROE بمعدل 2.3 نقطة مئوية مقابل كل وحدة زيادة في الرفع المالي','الحوكمة المؤسسية تُعزز كفاءة قرارات التمويل'],
+    'dl-recs':['تطوير أسواق رأس المال لتوسيع قاعدة التمويل','تفعيل معايير الإفصاح والشفافية المالية','دمج التمويل الإسلامي كبديل تنويعي'],
+    'dl-future':['توسيع الدراسة لتشمل دول المغرب العربي','دراسة أثر الأزمات الاقتصادية على قرارات التمويل'],
+    'dl-refs':['Modigliani & Miller (1958). American Economic Review.','Jensen & Meckling (1976). Journal of Financial Economics.','بن زيد وآخرون (2019). مجلة الاقتصاد الجزائري.'],
+  };
+  Object.entries(lists).forEach(([lid,items])=>{
+    const l=document.getElementById(lid); if(!l)return;
+    l.innerHTML='';
+    items.forEach(txt=>{addS(lid,'');const last=l.querySelector('.ditem:last-child input');if(last)last.value=txt;});
+  });
+
+  // Chapters
+  document.getElementById('ctree').innerHTML='';
+  [
+    {t:'الفصل الأول: الإطار النظري والمفاهيمي', ss:['المبحث الأول: مفهوم هيكل رأس المال','المبحث الثاني: نظريات التمويل','المبحث الثالث: مؤشرات الأداء المالي']},
+    {t:'الفصل الثاني: الدراسة القياسية', ss:['المبحث الأول: منهجية الدراسة والبيانات','المبحث الثاني: نتائج الاختبارات الإحصائية','المبحث الثالث: تحليل ومناقشة النتائج']},
+  ].forEach(ch=>{
+    addChapter();
+    const last=document.querySelector('#ctree .cnode:last-child');
+    if(!last)return;
+    const inp=last.querySelector('.cnode-hdr input');
+    if(inp)inp.value=ch.t;
+    ch.ss.forEach(s=>{addSection(last.querySelector('.add-section-btn'));const si=last.querySelector('.snode:last-child input');if(si)si.value=s;});
+  });
+
+  // KPIs
+  document.getElementById('kgrid').innerHTML='';
+  [{l:'معدل العائد على الأصول ROA',v:'78.4%'},{l:'قوة النموذج التفسيرية R²',v:'0.81'},{l:'عدد المشاهدات',v:'432'},{l:'نمو ROE 2020–2023',v:'+15.7%'}].forEach(k=>{
+    addKPI();const last=document.querySelector('#kgrid .kcard:last-child');
+    if(last){const[li,vi]=last.querySelectorAll('input');if(li)li.value=k.l;if(vi)vi.value=k.v;}
+  });
+
+  document.getElementById('asbar-msg').textContent=t('demo_loaded');
+  const b=document.getElementById('asbar'); b.classList.add('vis');
+  setTimeout(()=>b.classList.remove('vis'),2800);
+  goTo(0);
+}
+
+// ═══════════════════════════════════════════════════════
+// AUTOSAVE
+// ═══════════════════════════════════════════════════════
+let saveT=null;
+function autoSave(){
+  clearTimeout(saveT);
+  saveT=setTimeout(()=>{
+    try{
+      localStorage.setItem('mp_v4',JSON.stringify({...collect(),slideStates}));
+      document.getElementById('asbar-msg').textContent=t('saved');
+      const b=document.getElementById('asbar');b.classList.add('vis');
+      setTimeout(()=>b.classList.remove('vis'),2000);
+    }catch(e){}
+  },1400);
+}
+document.addEventListener('input',()=>autoSave());
+document.addEventListener('change',()=>autoSave());
+
+// ═══════════════════════════════════════════════════════
+// LOAD DRAFT
+// ═══════════════════════════════════════════════════════
+function loadDraft(){
+  try{
+    const raw=localStorage.getItem('mp_v4'); if(!raw)return;
+    const d=JSON.parse(raw);
+    const sv=(id,v)=>{const el=document.getElementById(id);if(el&&v)el.value=v;};
+    ['studentName','studentId','major','year','university','faculty','department',
+     'supervisor','coSupervisor','titleAr','titleFr','fieldEn','keywords','defenseDate',
+     'introOverview','introApproach','mainProblem','mainQuestion',
+     'methodology','dataSource','sampleType','sampleSize','tool',
+     'spatialScope','temporalScope','humanScope','timePeriod','software','conclusion'
+    ].forEach(id=>sv(id,d[id]));
+    if(d.level){const sel=document.getElementById('level');if(sel)sel.value=d.level;}
+    if(d.theme){const r=document.querySelector(`input[name="palette"][value="${d.theme}"]`);if(r){r.checked=true;}}
+    if(d.engine){const r=document.querySelector(`input[name="engine"][value="${d.engine}"]`);if(r){r.checked=true;}onEngineChange();}
+    if(d.slideStates)Object.assign(slideStates,d.slideStates);
+    // Re-apply toggle states
+    Object.keys(slideStates).forEach(k=>{
+      const tog=document.getElementById('tog-'+k);const card=document.getElementById('card-'+k);
+      if(tog){const on=slideStates[k];tog.className='tog-wrap '+(on?'on':'off');const lbl=tog.querySelector('.tog-lbl');if(lbl){lbl.setAttribute('data-i18n',on?'toggle_on':'toggle_off');lbl.textContent=t(on?'toggle_on':'toggle_off');}}
+      if(card)card.classList.toggle('slide-disabled',!slideStates[k]);
+    });
+    // Restore dynamic lists
+    const rL=(lid,items)=>{if(!Array.isArray(items)||!items.length)return;const l=document.getElementById(lid);if(!l)return;l.innerHTML='';items.forEach(txt=>{addS(lid,'');const last=l.querySelector('.ditem:last-child input');if(last)last.value=txt;});};
+    rL('dl-subQ',d.subQuestions); rL('dl-hyp',d.hypotheses); rL('dl-obj',d.objectives);
+    rL('dl-importance',d.importance); rL('dl-tests',d.statisticalTests);
+    rL('dl-axes',d.toolAxes); rL('dl-results',d.mainResults);
+    rL('dl-recs',d.recommendations); rL('dl-future',d.futureWork); rL('dl-refs',d.references);
+    // Chapters
+    if(d.chapters?.length){
+      document.getElementById('ctree').innerHTML='';
+      d.chapters.forEach(ch=>{addChapter();const last=document.querySelector('#ctree .cnode:last-child');if(!last)return;const inp=last.querySelector('.cnode-hdr input');if(inp)inp.value=ch.title||'';(ch.sections||[]).forEach(s=>{addSection(last.querySelector('.add-section-btn'));const si=last.querySelector('.snode:last-child input');if(si)si.value=s;});});
+    }
+    // KPIs
+    if(d.stats?.length){document.getElementById('kgrid').innerHTML='';d.stats.forEach(s=>{addKPI();const last=document.querySelector('#kgrid .kcard:last-child');if(last){const[li,vi]=last.querySelectorAll('input');if(li)li.value=s.label;if(vi)vi.value=s.value;}});}
+    onPaletteChange();
+  }catch(e){console.error('loadDraft:',e);}
+}
+
+// ═══════════════════════════════════════════════════════
+// GENERATE
+// ═══════════════════════════════════════════════════════
+// ── فحص حالة الخادم وإشعار Premium fallback ──────────────────────
+let _nodeAvailable = null; // null = لم يُفحص بعد
+async function checkNodeAvailability(){
+  if(_nodeAvailable !== null) return _nodeAvailable;
+  try{
+    const r = await fetch('/health', {signal: AbortSignal.timeout(4000)});
+    if(r.ok){ const j=await r.json(); _nodeAvailable=j.node_available===true; }
+    else { _nodeAvailable=false; }
+  }catch{ _nodeAvailable=false; }
+  return _nodeAvailable;
+}
+
+// عند اختيار محرك Premium — تحذير فوري إذا Node غير متاح
+async function onEngineChange(){
+  const eng=document.querySelector('input[name="engine"]:checked')?.value;
+  document.getElementById('canva-colors-wrap').style.display   = eng==='canva'   ?'':'none';
+  document.getElementById('classic-colors-wrap').style.display = eng==='classic' ?'':'none';
+  document.getElementById('premium-colors-wrap').style.display = eng==='premium' ?'':'none';
+  // Select first palette of chosen engine
+  const first=document.querySelector(`#cpick-${eng} input[type="radio"]`);
+  if(first) first.checked=true;
+  // تحذير Premium
+  if(eng==='premium'){
+    const nodeOk = await checkNodeAvailability();
+    const warn = document.getElementById('premium-warn');
+    if(warn) warn.style.display = nodeOk ? 'none' : '';
+  } else {
+    const warn = document.getElementById('premium-warn');
+    if(warn) warn.style.display = 'none';
+  }
+  onPaletteChange();
+}
+
+// ── AbortController للإلغاء ──────────────────────────────────────
+let _genAbort = null;
+
+async function generate(){
+  const d=collect();
+  if(!d.titleAr||!d.studentName){alert(t('required')+': '+t('student_name')+', '+t('title_ar'));goTo(0);return;}
+
+  // ── فتح الـ modal مرة واحدة فقط — لا يُغلق حتى النهاية ──
+  openM();
+
+  // ── Animation تقدمية مستمرة (تبدأ فوراً) ──
+  let _progStop = false;
+  let _currentP = 0;
+
+  const msgs_ar=['جاري تجهيز المحرك...','جاري معالجة البيانات...','بناء الشرائح...','تطبيق التصميم...','إضافة المحتوى...','اللمسات الأخيرة...','تجهيز الملف...'];
+  const msgs_fr=['Préparation du moteur...','Traitement des données...','Construction des slides...','Application du design...','Ajout du contenu...','Touches finales...','Préparation du fichier...'];
+  const msgs_en=['Warming up engine...','Processing data...','Building slides...','Applying design...','Adding content...','Final touches...','Preparing file...'];
+  const msgs={'ar':msgs_ar,'fr':msgs_fr,'en':msgs_en};
+
+  // ── FIX v17.1: Progress animation — لا تنتظر الخادم، تعمل بالتوازي ──
+  (async function liveProgress(){
+    const fast=[[5,400],[12,500],[20,500],[28,600],[30,500]];
+    for(const[p,ms] of fast){
+      if(_progStop) return;
+      await sl(ms); if(_progStop) return;
+      _currentP=p;
+      const mlist=msgs[currentLang]||msgs_ar;
+      setP(p, mlist[Math.floor(p/15)%mlist.length]);
+    }
+    let i=2;
+    while(_currentP < 92){
+      if(_progStop) return;
+      await sl(2500); if(_progStop) return;
+      _currentP = Math.min(92, _currentP + Math.random()*3+1.5);
+      const mlist=msgs[currentLang]||msgs_ar;
+      setP(Math.round(_currentP), mlist[i%mlist.length]); i++;
+    }
+  })();
+
+  // ── FIX v17.1: /generate يُطلق فوراً — warmup يعمل في الخلفية فقط ──
+  // السبب: الـ warmup loop القديمة كانت تحجب /generate حتى يستيقظ الخادم
+  // الحل: أرسل /generate مباشرة، والخادم سيرد عندما يكون جاهزاً
+  _genAbort = new AbortController();
+  const _timeoutId = setTimeout(()=>_genAbort.abort('timeout'), 240000);
+
+  // فحص سريع للخادم (غير حاجب) — لو فشل نكمل على أي حال
+  (async()=>{
+    try{
+      await fetch('/warmup',{signal:AbortSignal.timeout(3000)});
+    }catch(e){}
+  })();
+
+  let r = null;
+  let lastErr = null;
+  for(let attempt=1; attempt<=3; attempt++){
+    try{
+      if(attempt > 1){
+        const retryMsg={ar:'إعادة المحاولة...', fr:'Nouvelle tentative...', en:'Retrying...'};
+        setP(Math.max(15, _currentP), retryMsg[currentLang]||retryMsg.ar);
+        await sl(4000);
+      }
+      r = await fetch('/generate',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify(d),
+        signal:_genAbort.signal
+      });
+      lastErr = null;
+      break;
+    }catch(fetchErr){
+      lastErr = fetchErr;
+      if(fetchErr.name==='AbortError') break;
+    }
+  }
+  try{
+    if(lastErr) throw lastErr;
+    clearTimeout(_timeoutId);
+    _progStop=true;
+
+    if(!r.ok){
+      const e=await r.json().catch(()=>({error:r.statusText}));
+      throw new Error(e.error||'Server error');
+    }
+    // ── base64 JSON response (يتجاوز مشكلة Render proxy مع binary streams) ──
+    const json=await r.json();
+    if(!json.ok) throw new Error(json.error||'استجابة غير صالحة من الخادم');
+    // v18: redirect to preview page instead of direct download
+    setP(100,t('modal_ok'));await sl(400);
+    localStorage.removeItem('mp_v4');
+    // Redirect to preview
+    window.location.href = json.preview_url;
+  }catch(e){
+    clearTimeout(_timeoutId);
+    _progStop=true;
+    closeM();
+    if(e.name==='AbortError' || e.message==='timeout' || e.message==='user'){
+      if(e.message==='user') return;
+      const msg={
+        ar:'⏱️ انتهت مهلة الاتصال.\n\nالخادم في وضع السكون (cold start على Render).\n\nانتظر 30 ثانية ثم حاول مجدداً.',
+        fr:'⏱️ Délai dépassé.\n\nServeur en veille (cold start Render).\n\nAttendez 30s et réessayez.',
+        en:'⏱️ Connection timed out.\n\nServer sleeping (Render cold start).\n\nWait 30s and retry.'
+      };
+      alert(msg[currentLang]||msg.ar);
+    } else {
+      alert(e.message);
+    }
+  } finally {
+    _genAbort=null;
+  }
+}
+
+function openM(){
+  document.getElementById('ov').classList.add('open');
+  document.getElementById('mic').className='mic mspin';document.getElementById('mic').textContent='⚙️';
+  document.getElementById('mtitle').textContent=t('modal_title');
+  document.getElementById('msub').textContent=t('modal_sub');
+  document.getElementById('ptrack').style.display='';document.getElementById('plbl').style.display='';
+  document.getElementById('bcancel').style.display='';
+  setP(0,'');
+}
+function closeM(){
+  document.getElementById('ov').classList.remove('open');
+  document.getElementById('bcancel').style.display='none';
+}
+function cancelGen(){
+  if(_genAbort){ _genAbort.abort('user'); }
+  closeM();
+}
+function setP(p,m){document.getElementById('pfill').style.width=p+'%';document.getElementById('plbl').textContent=m||p+'%';}
+function showOk(url,name,isFallback,serverFilename){
+  document.getElementById('mic').className='mic mok';document.getElementById('mic').textContent='✅';
+  document.getElementById('mtitle').textContent=t('modal_ok');
+  document.getElementById('msub').textContent=t('modal_ok_sub');
+  document.getElementById('ptrack').style.display='none';document.getElementById('plbl').style.display='none';
+  document.getElementById('bcancel').style.display='none';
+  const mb=document.querySelector('.mbox');
+  mb.querySelectorAll('.bdl,.bnew,.fallback-note').forEach(e=>e.remove());
+  // تنبيه Fallback
+  if(isFallback){
+    const note=document.createElement('p');note.className='fallback-note';
+    const msgs={ar:'ℹ️ تم استخدام محرك Canva بدلاً من Premium (Node.js غير متاح على الخادم)',fr:'ℹ️ Moteur Canva utilisé à la place de Premium (Node.js absent)',en:'ℹ️ Canva engine used instead of Premium (Node.js unavailable)'};
+    note.textContent=msgs[currentLang]||msgs.ar;
+    mb.appendChild(note);
+  }
+  const a=document.createElement('a');
+  // نستخدم اسم الملف من الخادم مباشرة إن وُجد، وإلا نبني واحداً آمناً
+  const safeName = (name||'presentation').replace(/[\s\u0600-\u06FF]/g,'_').replace(/__+/g,'_').replace(/^_|_$/g,'');
+  const dlName = serverFilename || `mathkarati_${safeName||'presentation'}.pptx`;
+  a.href=url;a.download=dlName;
+  a.className='bdl';a.textContent=t('download_btn');mb.appendChild(a);
+  // تنظيف الـ blob URL بعد النقر لتجنب memory leak
+  a.addEventListener('click',()=>setTimeout(()=>URL.revokeObjectURL(url),60000),{once:true});
+  const r=document.createElement('button');r.className='bnew';r.textContent=t('new_btn');
+  r.onclick=()=>{localStorage.removeItem('mp_v4');location.reload();};mb.appendChild(r);
+}
+const sl=ms=>new Promise(r=>setTimeout(r,ms));
+
+// ═══════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════
+(function init(){
+  // ══════════════════════════════════════════════════
+  // KEEP-ALIVE: ping كل 10 دقائق لمنع نوم Render Free
+  // ══════════════════════════════════════════════════
+  (function keepAlive(){
+    const INTERVAL = 10 * 60 * 1000; // 10 دقائق
+    function ping(){
+      fetch('/ping',{method:'GET',signal:AbortSignal.timeout(8000)})
+        .catch(()=>{}); // silent
+    }
+    ping(); // ping فوري عند التحميل لإيقاظ الخادم
+    setInterval(ping, INTERVAL);
+  })();
+
+  // Init default list items
+  addS('dl-subQ','تساؤل فرعي'); addS('dl-hyp','فرضية'); addS('dl-obj','هدف');
+  addS('dl-importance','أهمية'); addS('dl-tests','اختبار');
+  addS('dl-results','نتيجة'); addS('dl-recs','توصية'); addKPI();
+  addChapter();
+
+  // Load saved lang
+  const savedLang=localStorage.getItem('mp_lang')||'ar';
+  setLang(savedLang);
+
+  // Load draft
+  loadDraft();
+
+  // Apply initial toggle states
+  Object.keys(slideStates).forEach(k=>{
+    if(!slideStates[k]){
+      const tog=document.getElementById('tog-'+k);
+      const card=document.getElementById('card-'+k);
+      if(tog){tog.className='tog-wrap off';const lbl=tog.querySelector('.tog-lbl');if(lbl){lbl.setAttribute('data-i18n','toggle_off');lbl.textContent=t('toggle_off');}}
+      if(card)card.classList.add('slide-disabled');
+    }
+  });
+})();
+</script>
+</body>
+</html>

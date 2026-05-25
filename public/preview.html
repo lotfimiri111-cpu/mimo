@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0">
+<title>معاينة العرض — مذكرتي Pro</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --navy:#07172F;--navy2:#0D2347;--gold:#C6A03C;--gold2:#E8C96A;
+  --bg:#0A1628;--surface:#111E35;--card:#162040;
+  --text:#F0EAD8;--muted:#8A9BB5;--border:#1E3060;
+  --ok:#10B981;--err:#EF4444;--warn:#F59E0B;
+  --r:10px;--t:.2s ease;
+}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Cairo',sans-serif;overflow:hidden}
+
+/* ─── Layout ─── */
+.app{display:grid;grid-template-rows:auto 1fr;grid-template-columns:260px 1fr;height:100vh;grid-template-areas:"header header""sidebar viewer"}
+
+/* ─── Header ─── */
+.header{grid-area:header;background:var(--navy);border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:12px;padding:0 18px;height:56px;z-index:100;
+  box-shadow:0 2px 20px rgba(0,0,0,.4)}
+.logo{width:36px;height:36px;background:linear-gradient(135deg,var(--gold),var(--gold2));
+  border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.header-title{font-size:14px;font-weight:700;color:#fff}
+.header-sub{font-size:11px;color:var(--muted);margin-top:1px}
+.header-right{margin-right:auto;display:flex;align-items:center;gap:8px}
+.badge-preview{background:rgba(198,160,60,.15);border:1px solid rgba(198,160,60,.35);
+  color:var(--gold2);font-size:10px;font-weight:700;padding:3px 10px;border-radius:99px}
+.btn-download{background:linear-gradient(135deg,var(--gold),var(--gold2));color:var(--navy);
+  border:none;padding:8px 18px;border-radius:8px;font-family:inherit;font-size:12px;
+  font-weight:800;cursor:pointer;transition:all var(--t);white-space:nowrap}
+.btn-download:hover{transform:translateY(-1px);box-shadow:0 4px 16px rgba(198,160,60,.4)}
+.btn-new{background:transparent;border:1px solid var(--border);color:var(--muted);
+  padding:7px 14px;border-radius:8px;font-family:inherit;font-size:11px;cursor:pointer;transition:all var(--t)}
+.btn-new:hover{border-color:var(--gold);color:var(--gold)}
+.slide-counter{font-size:12px;color:var(--muted);white-space:nowrap;padding:0 4px}
+
+/* ─── Sidebar ─── */
+.sidebar{grid-area:sidebar;background:var(--surface);border-left:1px solid var(--border);
+  overflow-y:auto;padding:12px 8px;scrollbar-width:thin;scrollbar-color:var(--border) transparent}
+.sidebar::-webkit-scrollbar{width:4px}
+.sidebar::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
+.sidebar-title{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;
+  letter-spacing:.08em;padding:4px 8px 8px;border-bottom:1px solid var(--border);margin-bottom:8px}
+
+.thumb-item{position:relative;border-radius:8px;overflow:hidden;cursor:pointer;
+  margin-bottom:6px;border:2px solid transparent;transition:all var(--t);background:var(--card)}
+.thumb-item:hover{border-color:rgba(198,160,60,.5)}
+.thumb-item.active{border-color:var(--gold);box-shadow:0 0 12px rgba(198,160,60,.3)}
+.thumb-item img{width:100%;height:auto;display:block;border-radius:6px}
+.thumb-num{position:absolute;bottom:4px;right:4px;background:rgba(0,0,0,.7);
+  color:#fff;font-size:9px;font-weight:700;padding:2px 5px;border-radius:4px}
+.thumb-loading{width:100%;aspect-ratio:16/9;background:var(--navy);
+  display:flex;align-items:center;justify-content:center;border-radius:6px}
+.thumb-loading::after{content:'';width:20px;height:20px;border:2px solid var(--border);
+  border-top-color:var(--gold);border-radius:50%;animation:spin .8s linear infinite}
+
+/* ─── Main Viewer ─── */
+.viewer{grid-area:viewer;display:flex;flex-direction:column;position:relative;overflow:hidden}
+.slide-area{flex:1;display:flex;align-items:center;justify-content:center;
+  padding:20px;position:relative;overflow:hidden}
+
+.slide-wrapper{position:relative;max-width:100%;max-height:100%;
+  box-shadow:0 8px 48px rgba(0,0,0,.6);border-radius:4px;overflow:hidden;
+  user-select:none;-webkit-user-select:none}
+.slide-wrapper img{display:block;max-width:calc(100vw - 340px);max-height:calc(100vh - 140px);
+  width:auto;height:auto;border-radius:4px;pointer-events:none;-webkit-user-drag:none}
+.slide-watermark-overlay{position:absolute;inset:0;pointer-events:none;z-index:10}
+
+/* Nav arrows */
+.nav-btn{position:absolute;top:50%;transform:translateY(-50%);
+  background:rgba(7,23,47,.7);backdrop-filter:blur(8px);
+  border:1px solid var(--border);border-radius:50%;
+  width:42px;height:42px;display:flex;align-items:center;justify-content:center;
+  cursor:pointer;color:#fff;font-size:18px;transition:all var(--t);z-index:20}
+.nav-btn:hover{background:rgba(198,160,60,.2);border-color:var(--gold)}
+.nav-btn:disabled{opacity:.2;cursor:not-allowed}
+.nav-prev{left:12px}
+.nav-next{right:12px}
+
+/* Slide loading overlay */
+.slide-loader{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  background:var(--navy);z-index:30;border-radius:4px;transition:opacity .3s}
+.slide-loader.hidden{opacity:0;pointer-events:none}
+.loader-ring{width:40px;height:40px;border:3px solid var(--border);
+  border-top-color:var(--gold);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* Bottom toolbar */
+.toolbar{background:var(--navy);border-top:1px solid var(--border);
+  display:flex;align-items:center;justify-content:center;gap:12px;padding:8px 16px;min-height:48px}
+.toolbar-group{display:flex;align-items:center;gap:6px}
+.tb-btn{background:transparent;border:1px solid var(--border);color:var(--muted);
+  padding:5px 10px;border-radius:6px;font-family:inherit;font-size:11px;cursor:pointer;
+  transition:all var(--t);display:flex;align-items:center;gap:4px}
+.tb-btn:hover{border-color:var(--gold);color:var(--gold)}
+.slide-dots{display:flex;gap:4px;align-items:center}
+.dot{width:6px;height:6px;border-radius:50%;background:var(--border);
+  cursor:pointer;transition:all var(--t);flex-shrink:0}
+.dot.active{background:var(--gold);transform:scale(1.3)}
+.dot:hover{background:var(--muted)}
+
+/* ─── Payment Modal ─── */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.75);backdrop-filter:blur(6px);
+  z-index:500;display:flex;align-items:center;justify-content:center;padding:16px;
+  opacity:0;pointer-events:none;transition:opacity .3s}
+.modal-bg.open{opacity:1;pointer-events:all}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:16px;
+  max-width:480px;width:100%;padding:28px;position:relative;
+  box-shadow:0 24px 64px rgba(0,0,0,.6);animation:slideUp .3s ease}
+@keyframes slideUp{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}
+.modal-close{position:absolute;top:14px;left:14px;background:transparent;border:none;
+  color:var(--muted);font-size:20px;cursor:pointer;line-height:1;transition:color var(--t)}
+.modal-close:hover{color:var(--err)}
+.modal-icon{font-size:36px;text-align:center;margin-bottom:12px}
+.modal-title{font-size:18px;font-weight:900;color:#fff;text-align:center;margin-bottom:4px}
+.modal-sub{font-size:12px;color:var(--muted);text-align:center;margin-bottom:20px}
+.price-badge{background:linear-gradient(135deg,var(--gold),var(--gold2));color:var(--navy);
+  font-size:22px;font-weight:900;text-align:center;padding:10px;border-radius:10px;margin-bottom:20px}
+.pay-method{background:var(--card);border:1px solid var(--border);border-radius:10px;
+  padding:14px 16px;margin-bottom:10px}
+.pay-method h4{font-size:12px;font-weight:700;color:var(--gold2);margin-bottom:6px}
+.pay-method p{font-size:12px;color:var(--text);line-height:1.7}
+.pay-method strong{color:#fff}
+.divider{border:none;border-top:1px solid var(--border);margin:16px 0}
+
+/* Receipt upload area */
+.upload-area{border:2px dashed var(--border);border-radius:10px;padding:20px;
+  text-align:center;cursor:pointer;transition:all var(--t);margin-bottom:12px;position:relative}
+.upload-area:hover,.upload-area.drag{border-color:var(--gold);background:rgba(198,160,60,.06)}
+.upload-area input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.upload-area .icon{font-size:28px;margin-bottom:6px}
+.upload-area p{font-size:11px;color:var(--muted)}
+.upload-area .fname{font-size:12px;color:var(--gold2);font-weight:700;margin-top:4px}
+
+.btn-submit{width:100%;background:linear-gradient(135deg,var(--gold),var(--gold2));
+  color:var(--navy);border:none;padding:12px;border-radius:10px;
+  font-family:inherit;font-size:14px;font-weight:800;cursor:pointer;
+  transition:all var(--t);margin-top:4px}
+.btn-submit:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 4px 16px rgba(198,160,60,.4)}
+.btn-submit:disabled{opacity:.5;cursor:not-allowed}
+
+.msg-ok{background:rgba(16,185,129,.12);border:1px solid rgba(16,185,129,.3);
+  color:var(--ok);border-radius:8px;padding:12px;text-align:center;font-size:12px;font-weight:600}
+.msg-err{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);
+  color:var(--err);border-radius:8px;padding:10px;text-align:center;font-size:12px;margin-bottom:8px}
+
+/* ─── Fullscreen ─── */
+.viewer:-webkit-full-screen .toolbar,
+.viewer:-webkit-full-screen .slide-area{background:var(--bg)}
+:-webkit-full-screen .nav-btn{background:rgba(0,0,0,.6)}
+
+/* ─── Responsive ─── */
+@media(max-width:680px){
+  .app{grid-template-areas:"header""viewer";grid-template-rows:auto 1fr;grid-template-columns:1fr}
+  .sidebar{display:none}
+  .slide-wrapper img{max-width:100vw;max-height:calc(100vh-120px)}
+  .header-right .btn-new{display:none}
+}
+@media(max-width:400px){
+  .slide-dots{display:none}
+}
+</style>
+</head>
+<body>
+
+<div class="app" id="app">
+
+  <!-- Header -->
+  <header class="header">
+    <div class="logo">📊</div>
+    <div>
+      <div class="header-title" id="h-title">جاري التحميل...</div>
+      <div class="header-sub" id="h-sub">مذكرتي Pro</div>
+    </div>
+    <div class="header-right">
+      <span class="badge-preview">🔍 معاينة</span>
+      <span class="slide-counter" id="slide-counter">—</span>
+      <button class="tb-btn" id="btn-fs" onclick="toggleFullscreen()">⛶ ملء الشاشة</button>
+      <button class="btn-new" onclick="location.href='/'">+ عرض جديد</button>
+      <button class="btn-download" onclick="openPayModal()">📥 تحميل العرض</button>
+    </div>
+  </header>
+
+  <!-- Sidebar thumbnails -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-title">الشرائح</div>
+    <div id="thumbs-container"></div>
+  </aside>
+
+  <!-- Main viewer -->
+  <main class="viewer" id="viewer">
+    <div class="slide-area">
+      <button class="nav-btn nav-prev" id="btn-prev" onclick="goSlide(-1)">&#8249;</button>
+
+      <div class="slide-wrapper" id="slide-wrapper">
+        <div class="slide-loader" id="slide-loader">
+          <div class="loader-ring"></div>
+        </div>
+        <img id="slide-img" src="" alt="شريحة" draggable="false"
+          oncontextmenu="return false" ondragstart="return false">
+      </div>
+
+      <button class="nav-btn nav-next" id="btn-next" onclick="goSlide(1)">&#8250;</button>
+    </div>
+
+    <!-- Bottom toolbar -->
+    <div class="toolbar">
+      <div class="toolbar-group">
+        <button class="tb-btn" onclick="goSlide(-1)">❮ السابق</button>
+      </div>
+      <div class="slide-dots" id="dots"></div>
+      <div class="toolbar-group">
+        <button class="tb-btn" onclick="goSlide(1)">التالي ❯</button>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- Payment Modal -->
+<div class="modal-bg" id="pay-modal">
+  <div class="modal">
+    <button class="modal-close" onclick="closePayModal()">✕</button>
+    <div class="modal-icon">💳</div>
+    <div class="modal-title">تحميل العرض</div>
+    <div class="modal-sub">قم بالدفع وارفع وصل التسديد للحصول على الملف الكامل</div>
+
+    <div class="price-badge" id="modal-price">800 دج</div>
+
+    <div id="pay-methods">
+      <div class="pay-method" id="pay-ccp-block" style="display:none">
+        <h4>💳 CCP — بريد الجزائر</h4>
+        <p>رقم الحساب: <strong id="pay-ccp">—</strong></p>
+        <p>المستفيد: <strong id="pay-name">—</strong></p>
+      </div>
+      <div class="pay-method" id="pay-baridimob-block" style="display:none">
+        <h4>📱 BaridiMob</h4>
+        <p>رقم الهاتف: <strong id="pay-baridimob">—</strong></p>
+        <p>المستفيد: <strong id="pay-name2">—</strong></p>
+      </div>
+      <div class="pay-method" id="pay-info-block" style="display:none">
+        <h4>ℹ️ معلومات إضافية</h4>
+        <p id="pay-info">—</p>
+      </div>
+    </div>
+
+    <hr class="divider">
+    <div id="receipt-section">
+      <div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:8px">📎 إرفاق وصل التسديد</div>
+      <div class="upload-area" id="upload-area">
+        <input type="file" id="receipt-file" accept=".jpg,.jpeg,.png,.pdf,.webp" onchange="onFileSelect(this)">
+        <div class="icon">📁</div>
+        <p>اضغط لاختيار الوصل (صورة أو PDF)</p>
+        <div class="fname" id="fname"></div>
+      </div>
+      <div class="msg-err" id="receipt-err" style="display:none"></div>
+      <button class="btn-submit" id="btn-submit" onclick="submitReceipt()" disabled>إرسال الطلب</button>
+    </div>
+    <div class="msg-ok" id="receipt-ok" style="display:none">
+      ✅ تم استلام طلبك! سيتم مراجعة الوصل وإرسال كود التحميل إليك قريباً.<br>
+      <span style="display:block;margin-top:8px;font-size:11px;opacity:.8">احتفظ برقم طلبك: <span id="order-id-display" style="font-weight:900;color:var(--gold2)"></span></span>
+    </div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════════════════════
+const TOKEN = location.pathname.split('/preview/')[1];
+let ORDER = null;
+let currentSlide = 1;
+let totalSlides = 0;
+let loadedSlides = {};
+let preloadedSlides = {};
+
+// Disable right-click & text selection globally
+document.addEventListener('contextmenu', e => e.preventDefault());
+document.addEventListener('keydown', e => {
+  if ((e.ctrlKey || e.metaKey) && ['s','p','u'].includes(e.key.toLowerCase())) e.preventDefault();
+});
+
+// ══════════════════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════════════════
+async function init() {
+  try {
+    const res = await fetch(`/api/preview/${TOKEN}/info`);
+    if (!res.ok) { showError('العرض غير موجود'); return; }
+    ORDER = await res.json();
+
+    document.title = `${ORDER.title_ar} — مذكرتي Pro`;
+    document.getElementById('h-title').textContent = ORDER.title_ar;
+    document.getElementById('h-sub').textContent = `${ORDER.student_name} · ${ORDER.engine}`;
+    totalSlides = ORDER.slide_count;
+
+    // Build dots
+    const dotsEl = document.getElementById('dots');
+    for (let i = 1; i <= Math.min(totalSlides, 15); i++) {
+      const d = document.createElement('div');
+      d.className = 'dot' + (i === 1 ? ' active' : '');
+      d.dataset.n = i;
+      d.onclick = () => setSlide(i);
+      dotsEl.appendChild(d);
+    }
+
+    // Build thumbnails
+    buildThumbs();
+
+    // Load first slide
+    await setSlide(1);
+
+    // Payment modal info
+    document.getElementById('modal-price').textContent = `${ORDER.price} ${ORDER.currency}`;
+    if (ORDER.payment_ccp) {
+      document.getElementById('pay-ccp').textContent = ORDER.payment_ccp;
+      document.getElementById('pay-name').textContent = ORDER.payment_name || '';
+      document.getElementById('pay-ccp-block').style.display = '';
+    }
+    if (ORDER.payment_baridimob) {
+      document.getElementById('pay-baridimob').textContent = ORDER.payment_baridimob;
+      document.getElementById('pay-name2').textContent = ORDER.payment_name || '';
+      document.getElementById('pay-baridimob-block').style.display = '';
+    }
+    if (ORDER.payment_info) {
+      document.getElementById('pay-info').textContent = ORDER.payment_info;
+      document.getElementById('pay-info-block').style.display = '';
+    }
+    document.getElementById('order-id-display').textContent = ORDER.order_id?.slice(0,8).toUpperCase();
+
+  } catch(e) {
+    showError('حدث خطأ في تحميل العرض');
+    console.error(e);
+  }
+}
+
+function showError(msg) {
+  document.getElementById('h-title').textContent = msg;
+}
+
+// ══════════════════════════════════════════════════════════
+// THUMBNAILS
+// ══════════════════════════════════════════════════════════
+function buildThumbs() {
+  const container = document.getElementById('thumbs-container');
+  for (let i = 1; i <= totalSlides; i++) {
+    const item = document.createElement('div');
+    item.className = 'thumb-item' + (i === 1 ? ' active' : '');
+    item.id = `thumb-${i}`;
+    item.dataset.n = i;
+    item.onclick = () => setSlide(i);
+
+    const loader = document.createElement('div');
+    loader.className = 'thumb-loading';
+    loader.id = `thumb-loader-${i}`;
+
+    const img = document.createElement('img');
+    img.id = `thumb-img-${i}`;
+    img.style.display = 'none';
+    img.draggable = false;
+    img.oncontextmenu = () => false;
+
+    const num = document.createElement('div');
+    num.className = 'thumb-num';
+    num.textContent = i;
+
+    item.append(loader, img, num);
+    container.appendChild(item);
+  }
+  // Lazy load thumbs with IntersectionObserver
+  loadVisibleThumbs();
+}
+
+function loadVisibleThumbs() {
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        const n = parseInt(e.target.dataset.n);
+        loadThumb(n);
+        io.unobserve(e.target);
+      }
+    });
+  }, { rootMargin: '200px' });
+
+  document.querySelectorAll('.thumb-item').forEach(el => io.observe(el));
+}
+
+function loadThumb(n) {
+  const img = document.getElementById(`thumb-img-${n}`);
+  const loader = document.getElementById(`thumb-loader-${n}`);
+  if (!img || img.src.includes('/thumb/')) return;
+  img.src = `/api/preview/${TOKEN}/thumb/${n}`;
+  img.onload = () => { img.style.display = 'block'; if(loader) loader.style.display = 'none'; };
+}
+
+// ══════════════════════════════════════════════════════════
+// SLIDE NAVIGATION
+// ══════════════════════════════════════════════════════════
+async function setSlide(n) {
+  if (n < 1 || n > totalSlides) return;
+  currentSlide = n;
+  updateCounter();
+  updateDots();
+  updateThumbs();
+  updateNavBtns();
+  await loadSlide(n);
+  preloadAdjacent(n);
+}
+
+function goSlide(dir) { setSlide(currentSlide + dir); }
+
+async function loadSlide(n) {
+  const img = document.getElementById('slide-img');
+  const loader = document.getElementById('slide-loader');
+
+  // Check cache
+  if (preloadedSlides[n]) {
+    img.src = preloadedSlides[n];
+    loader.classList.add('hidden');
+    return;
+  }
+
+  loader.classList.remove('hidden');
+  img.style.opacity = '0';
+
+  const url = `/api/preview/${TOKEN}/slide/${n}`;
+  await new Promise((resolve) => {
+    const tmpImg = new Image();
+    tmpImg.onload = () => {
+      preloadedSlides[n] = url;
+      img.src = url;
+      img.style.opacity = '1';
+      loader.classList.add('hidden');
+      resolve();
+    };
+    tmpImg.onerror = () => {
+      loader.classList.add('hidden');
+      img.style.opacity = '1';
+      resolve();
+    };
+    tmpImg.src = url + '?t=' + Date.now();
+  });
+}
+
+function preloadAdjacent(n) {
+  [n+1, n+2, n-1].forEach(i => {
+    if (i >= 1 && i <= totalSlides && !preloadedSlides[i]) {
+      const img = new Image();
+      const url = `/api/preview/${TOKEN}/slide/${i}`;
+      img.onload = () => { preloadedSlides[i] = url; };
+      img.src = url;
+    }
+  });
+}
+
+function updateCounter() {
+  document.getElementById('slide-counter').textContent = `${currentSlide} / ${totalSlides}`;
+}
+
+function updateDots() {
+  document.querySelectorAll('.dot').forEach(d => {
+    d.classList.toggle('active', parseInt(d.dataset.n) === currentSlide);
+  });
+}
+
+function updateThumbs() {
+  document.querySelectorAll('.thumb-item').forEach(t => {
+    t.classList.toggle('active', parseInt(t.dataset.n) === currentSlide);
+  });
+  const active = document.getElementById(`thumb-${currentSlide}`);
+  if (active) active.scrollIntoView({ behavior:'smooth', block:'nearest' });
+}
+
+function updateNavBtns() {
+  document.getElementById('btn-prev').disabled = currentSlide <= 1;
+  document.getElementById('btn-next').disabled = currentSlide >= totalSlides;
+}
+
+// Keyboard navigation
+document.addEventListener('keydown', e => {
+  if (document.getElementById('pay-modal').classList.contains('open')) return;
+  if (e.key === 'ArrowRight' || e.key === 'ArrowUp') goSlide(-1);
+  if (e.key === 'ArrowLeft' || e.key === 'ArrowDown') goSlide(1);
+  if (e.key === 'Escape') closePayModal();
+  if (e.key === 'f' || e.key === 'F') toggleFullscreen();
+});
+
+// Touch/swipe support
+let touchStartX = 0;
+document.getElementById('slide-wrapper').addEventListener('touchstart', e => {
+  touchStartX = e.touches[0].clientX;
+}, {passive:true});
+document.getElementById('slide-wrapper').addEventListener('touchend', e => {
+  const dx = e.changedTouches[0].clientX - touchStartX;
+  if (Math.abs(dx) > 40) { goSlide(dx > 0 ? -1 : 1); } // RTL: swipe right = prev
+});
+
+// Fullscreen
+function toggleFullscreen() {
+  const el = document.getElementById('viewer');
+  if (!document.fullscreenElement) {
+    (document.documentElement.requestFullscreen || document.documentElement.webkitRequestFullscreen).call(document.documentElement);
+    document.getElementById('btn-fs').textContent = '⛶ خروج';
+  } else {
+    (document.exitFullscreen || document.webkitExitFullscreen).call(document);
+    document.getElementById('btn-fs').textContent = '⛶ ملء الشاشة';
+  }
+}
+
+// ══════════════════════════════════════════════════════════
+// PAYMENT MODAL
+// ══════════════════════════════════════════════════════════
+function openPayModal() {
+  document.getElementById('pay-modal').classList.add('open');
+}
+function closePayModal() {
+  document.getElementById('pay-modal').classList.remove('open');
+}
+document.getElementById('pay-modal').addEventListener('click', e => {
+  if (e.target === e.currentTarget) closePayModal();
+});
+
+function onFileSelect(input) {
+  const file = input.files[0];
+  if (!file) return;
+  document.getElementById('fname').textContent = file.name;
+  document.getElementById('btn-submit').disabled = false;
+  document.getElementById('receipt-err').style.display = 'none';
+}
+
+// Drag & drop
+const uploadArea = document.getElementById('upload-area');
+uploadArea.addEventListener('dragover', e => { e.preventDefault(); uploadArea.classList.add('drag'); });
+uploadArea.addEventListener('dragleave', () => uploadArea.classList.remove('drag'));
+uploadArea.addEventListener('drop', e => {
+  e.preventDefault(); uploadArea.classList.remove('drag');
+  const file = e.dataTransfer.files[0];
+  if (file) {
+    document.getElementById('receipt-file').files = e.dataTransfer.files;
+    onFileSelect(document.getElementById('receipt-file'));
+  }
+});
+
+async function submitReceipt() {
+  if (!ORDER) return;
+  const fileInput = document.getElementById('receipt-file');
+  if (!fileInput.files[0]) {
+    showReceiptErr('يرجى اختيار وصل التسديد أولاً');
+    return;
+  }
+
+  const btn = document.getElementById('btn-submit');
+  btn.disabled = true;
+  btn.textContent = 'جاري الإرسال...';
+
+  const formData = new FormData();
+  formData.append('receipt', fileInput.files[0]);
+
+  try {
+    const res = await fetch(`/api/orders/${ORDER.order_id}/receipt`, {
+      method: 'POST', body: formData
+    });
+    const json = await res.json();
+    if (!res.ok) { showReceiptErr(json.error); btn.disabled=false; btn.textContent='إرسال الطلب'; return; }
+
+    // Success
+    document.getElementById('receipt-section').style.display = 'none';
+    document.getElementById('receipt-ok').style.display = 'block';
+  } catch(e) {
+    showReceiptErr('حدث خطأ في الإرسال. تأكد من الاتصال وأعد المحاولة.');
+    btn.disabled = false; btn.textContent = 'إرسال الطلب';
+  }
+}
+
+function showReceiptErr(msg) {
+  const el = document.getElementById('receipt-err');
+  el.textContent = msg;
+  el.style.display = 'block';
+}
+
+// ══════════════════════════════════════════════════════════
+// START
+// ══════════════════════════════════════════════════════════
+init();
+</script>
+</body>
+</html>

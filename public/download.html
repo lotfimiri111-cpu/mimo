@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>تحميل العرض — مذكرتي Pro</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--navy:#07172F;--gold:#C6A03C;--gold2:#E8C96A;--bg:#060f1e;--surface:#0e1d35;--border:#1a2e50;--text:#f0e8d8;--muted:#8a9bb5;--ok:#10B981;--err:#EF4444}
+body{min-height:100vh;background:var(--bg);color:var(--text);font-family:'Cairo',sans-serif;display:flex;align-items:center;justify-content:center;padding:20px}
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 80% 60% at 50% 0%,rgba(198,160,60,.08),transparent 60%);pointer-events:none}
+.box{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:40px 36px;max-width:440px;width:100%;position:relative;box-shadow:0 24px 64px rgba(0,0,0,.5)}
+.logo{width:56px;height:56px;background:linear-gradient(135deg,var(--gold),var(--gold2));border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:26px;margin:0 auto 16px;box-shadow:0 6px 20px rgba(198,160,60,.35)}
+h1{font-size:22px;font-weight:900;text-align:center;margin-bottom:6px}
+.sub{font-size:12px;color:var(--muted);text-align:center;margin-bottom:28px;line-height:1.6}
+.field label{display:block;font-size:12px;font-weight:700;margin-bottom:6px;color:var(--text)}
+.code-input{width:100%;background:#071527;border:2px solid var(--border);border-radius:10px;
+  padding:14px 16px;font-family:'Cairo',monospace;font-size:22px;font-weight:900;
+  color:var(--gold2);text-align:center;letter-spacing:.15em;text-transform:uppercase;
+  transition:border-color .2s;outline:none}
+.code-input:focus{border-color:var(--gold)}
+.code-input::placeholder{color:var(--border);letter-spacing:.1em;font-size:16px}
+.err{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.25);color:var(--err);
+  border-radius:8px;padding:10px;text-align:center;font-size:12px;margin-top:10px;display:none}
+.btn{width:100%;background:linear-gradient(135deg,var(--gold),var(--gold2));color:var(--navy);
+  border:none;padding:14px;border-radius:10px;font-family:inherit;font-size:15px;font-weight:800;
+  cursor:pointer;margin-top:14px;transition:all .2s}
+.btn:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 6px 20px rgba(198,160,60,.4)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.ok-box{display:none;background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.3);
+  border-radius:12px;padding:20px;text-align:center;margin-top:16px}
+.ok-box h3{color:var(--ok);font-size:16px;margin-bottom:6px}
+.ok-box p{font-size:12px;color:var(--muted)}
+.links{display:flex;gap:10px;justify-content:center;margin-top:20px;flex-wrap:wrap}
+.links a{font-size:11px;color:var(--gold);text-decoration:none;opacity:.8}
+.links a:hover{opacity:1}
+.hint{font-size:11px;color:var(--muted);text-align:center;margin-top:12px;line-height:1.6}
+</style>
+</head>
+<body>
+<div class="box">
+  <div class="logo">📥</div>
+  <h1>تحميل العرض</h1>
+  <p class="sub">أدخل كود التحميل الذي تم إرساله إليك بعد التحقق من الدفع</p>
+  <div class="field">
+    <label>كود التحميل</label>
+    <input type="text" class="code-input" id="code-input" placeholder="XXXXXXXX"
+      maxlength="8" oninput="this.value=this.value.toUpperCase().replace(/[^A-Z0-9]/g,'')"
+      onkeydown="if(event.key==='Enter')verify()">
+  </div>
+  <div class="err" id="err"></div>
+  <button class="btn" id="btn" onclick="verify()">تحميل الملف</button>
+  <div class="ok-box" id="ok-box">
+    <h3>✅ جاري التحميل...</h3>
+    <p>سيبدأ تحميل ملف PowerPoint تلقائياً.</p>
+    <p style="margin-top:8px;font-size:11px">إذا لم يبدأ التحميل، <a href="#" id="manual-dl" style="color:var(--gold)">اضغط هنا</a></p>
+  </div>
+  <p class="hint">الكود صالح للاستخدام مرة واحدة فقط<br>للمساعدة تواصل معنا</p>
+  <div class="links">
+    <a href="/">← إنشاء عرض جديد</a>
+    <a href="/download">إدخال كود آخر</a>
+  </div>
+</div>
+<script>
+async function verify() {
+  const code = document.getElementById('code-input').value.trim().toUpperCase();
+  if (code.length < 6) { showErr('يرجى إدخال الكود كاملاً'); return; }
+  const btn = document.getElementById('btn');
+  btn.disabled = true; btn.textContent = 'جاري التحقق...';
+  document.getElementById('err').style.display = 'none';
+  try {
+    const res = await fetch('/api/download/verify', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({code})
+    });
+    if (!res.ok) {
+      const j = await res.json().catch(()=>({error:'خطأ في الخادم'}));
+      showErr(j.error || 'كود غير صحيح');
+      btn.disabled=false; btn.textContent='تحميل الملف';
+      return;
+    }
+    // Trigger download via blob
+    const blob = await res.blob();
+    const cd = res.headers.get('Content-Disposition') || '';
+    const name = cd.match(/filename="?([^";]+)"?/)?.[1] || 'mathkarati.pptx';
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = name;
+    document.body.appendChild(a); a.click();
+    document.body.removeChild(a);
+    document.getElementById('manual-dl').href = url;
+    document.getElementById('ok-box').style.display = 'block';
+    btn.textContent = '✅ تم التحميل';
+    setTimeout(() => URL.revokeObjectURL(url), 60000);
+  } catch(e) {
+    showErr('حدث خطأ في الاتصال. تأكد من الاتصال بالإنترنت وأعد المحاولة.');
+    btn.disabled=false; btn.textContent='تحميل الملف';
+  }
+}
+function showErr(msg) {
+  const el = document.getElementById('err');
+  el.textContent = msg; el.style.display = 'block';
+}
+// Auto-focus
+window.onload = () => document.getElementById('code-input').focus();
+// Read code from URL if passed
+const params = new URLSearchParams(location.search);
+if (params.get('code')) {
+  document.getElementById('code-input').value = params.get('code').toUpperCase();
+}
+</script>
+</body>
+</html>

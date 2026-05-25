@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: mathkarati-pro-v18
+    env: python
+    buildCommand: pip install -r requirements.txt && apt-get install -y libreoffice poppler-utils -q
+    startCommand: gunicorn app:app --bind 0.0.0.0:$PORT --workers 2 --timeout 120 --preload
+    envVars:
+      - key: SECRET_KEY
+        generateValue: true
+      - key: PORT
+        value: 10000
