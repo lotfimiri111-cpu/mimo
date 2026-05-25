@@ -239,7 +239,15 @@ def get_preview(presentation_id):
     if not pptx_path.exists():
         return jsonify({"error": "العرض غير موجود أو انتهت صلاحيته"}), 404
 
-    # Background thread is still working — return 202 so the client polls again
+    # Generate on-demand if not cached yet
+    try:
+        slides = pptx_to_preview_images(str(pptx_path), watermark=True)
+        set_cached_preview(presentation_id, slides)
+        if slides:
+            return jsonify({"ok": True, "slides": slides, "count": len(slides), "cached": False})
+    except Exception as exc:
+        log.warning(f"On-demand preview failed: {exc}")
+
     return jsonify({"ok": False, "processing": True,
                     "message": "المعاينة قيد التجهيز، يرجى الانتظار..."}), 202
 

@@ -1,369 +1,308 @@
 """
-core/preview.py v3 — معاينة PPTX حقيقية بدون LibreOffice
-يستخدم python-pptx لقراءة كل عناصر الشريحة ويحوّلها إلى صورة JPEG دقيقة بـ Pillow.
+core/preview.py v5 — قراءة ألوان PPTX من XML مباشرةً
 """
-import base64
-import io
-import logging
-import threading
-from pathlib import Path
-from typing import List, Optional, Tuple
+import base64, io, logging, os, threading
+from typing import List, Optional
 
 log = logging.getLogger(__name__)
-
 _cache: dict = {}
 _cache_lock = threading.Lock()
-MAX_PREVIEW_SLIDES = 3
+MAX_SLIDES = 3
+
+CAIRO_PATHS = [
+    os.path.expanduser("~/.fonts/cairo/Cairo.ttf"),
+    "/root/.fonts/cairo/Cairo.ttf",
+    "/tmp/fonts/cairo/Cairo.ttf",
+    "/home/user/.fonts/cairo/Cairo.ttf",
+    "/opt/render/project/src/.fonts/cairo/Cairo.ttf",
+    "/opt/render/.fonts/cairo/Cairo.ttf",
+    # Amiri fallback
+    os.path.expanduser("~/.fonts/cairo/Amiri-Regular.ttf"),
+    "/root/.fonts/cairo/Amiri-Regular.ttf",
+    "/tmp/fonts/cairo/Amiri-Regular.ttf",
+]
+FALLBACK_FONTS = [
+    "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
+    "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+    "/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf",
+    "/usr/share/fonts/truetype/freefont/FreeSansBold.ttf",
+    "/usr/share/fonts/truetype/freefont/FreeSans.ttf",
+]
+
+def _find_font(size=16, bold=False):
+    from PIL import ImageFont
+    # Cairo أولاً
+    for p in CAIRO_PATHS:
+        if os.path.exists(p):
+            try: return ImageFont.truetype(p, size)
+            except: pass
+    # Fallback
+    for p in FALLBACK_FONTS:
+        if os.path.exists(p):
+            try: return ImageFont.truetype(p, size)
+            except: pass
+    return ImageFont.load_default()
 
 
-def get_cached_preview(presentation_id: str) -> Optional[List[str]]:
-    with _cache_lock:
-        return _cache.get(presentation_id)
+def get_cached_preview(pid):
+    with _cache_lock: return _cache.get(pid)
 
-
-def set_cached_preview(presentation_id: str, slides: List[str]) -> None:
-    with _cache_lock:
-        _cache[presentation_id] = slides
+def set_cached_preview(pid, slides):
+    with _cache_lock: _cache[pid] = slides
 
 
 def pptx_to_preview_images(pptx_path: str, watermark: bool = True) -> List[str]:
     try:
-        slides = _render_pptx(pptx_path)
-        if watermark:
-            slides = [_add_watermark(s) for s in slides]
-        return slides
-    except Exception as exc:
-        log.warning(f"Preview render failed: {exc}", exc_info=True)
+        from pptx import Presentation
+        prs = Presentation(pptx_path)
+        W = max(960, int((prs.slide_width  or 9144000) / 9525))
+        H = max(540, int((prs.slide_height or 5143500) / 9525))
+        results = []
+        for slide in list(prs.slides)[:MAX_SLIDES]:
+            img = _render_slide(slide, W, H)
+            if watermark:
+                img = _add_watermark(img)
+            buf = io.BytesIO()
+            img.save(buf, "JPEG", quality=90)
+            results.append(base64.b64encode(buf.getvalue()).decode())
+        return results
+    except Exception as e:
+        log.error(f"preview v5 failed: {e}", exc_info=True)
         return []
 
 
-# ─── EMU helpers ──────────────────────────────────────────────────────────────
-EMU = 914400.0
-SCALE = 96 / EMU   # EMU → px at 96dpi
+def _hex(h) -> tuple:
+    h = str(h).lstrip("#")
+    if len(h) == 6:
+        return (int(h[0:2],16), int(h[2:4],16), int(h[4:6],16))
+    return (200,200,200)
 
 
-def _px(emu) -> int:
-    return int((emu or 0) * SCALE)
-
-
-def _rgb_from_pptx(color_obj) -> Optional[Tuple[int,int,int]]:
+def _read_color_xml(elem) -> Optional[tuple]:
+    """قراءة لون من عنصر XML بشكل مباشر"""
+    if elem is None: return None
     try:
-        rgb = color_obj.rgb
-        return (rgb.r, rgb.g, rgb.b)
-    except Exception:
-        return None
-
-
-def _hex_to_rgb(h: str) -> Tuple[int,int,int]:
-    h = h.lstrip("#")
-    return tuple(int(h[i:i+2], 16) for i in (0, 2, 4))
-
-
-# ─── Main renderer ────────────────────────────────────────────────────────────
-def _render_pptx(pptx_path: str) -> List[str]:
-    from pptx import Presentation
-    from pptx.enum.dml import MSO_THEME_COLOR
-    from PIL import Image
-
-    prs = Presentation(pptx_path)
-    W = max(960, _px(prs.slide_width))
-    H = max(540, _px(prs.slide_height))
-
-    results = []
-    for slide in list(prs.slides)[:MAX_PREVIEW_SLIDES]:
-        img = _draw_slide(slide, W, H)
-        buf = io.BytesIO()
-        img.save(buf, format="JPEG", quality=88, optimize=True)
-        results.append(base64.b64encode(buf.getvalue()).decode("ascii"))
-    return results
-
-
-def _draw_slide(slide, W: int, H: int):
-    from PIL import Image, ImageDraw
-    from pptx.util import Pt
-    from pptx.enum.shapes import MSO_SHAPE_TYPE
-
-    # 1) خلفية الشريحة
-    img = _draw_background(slide, W, H)
-    draw = ImageDraw.Draw(img)
-
-    # 2) ارسم كل شكل بالترتيب
-    for shape in slide.shapes:
-        try:
-            _draw_shape(img, draw, shape, W, H)
-        except Exception as e:
-            log.debug(f"Shape render skip: {e}")
-
-    return img
-
-
-def _draw_background(slide, W: int, H: int):
-    from PIL import Image, ImageDraw
-    from pptx.dml.color import RGBColor
-
-    bg_color = (255, 255, 255)
-    try:
-        bg = slide.background
-        fill = bg.fill
-        ftype = fill.type
-        if ftype is not None:
-            c = _rgb_from_pptx(fill.fore_color)
-            if c:
-                bg_color = c
-    except Exception:
-        pass
-
-    img = Image.new("RGB", (W, H), bg_color)
-
-    # gradient إذا كان محدداً (نحاكيه بشكل بسيط)
-    # نقرأ الـ XML للحصول على gradient stops
-    try:
-        from pptx.oxml.ns import qn
         from lxml import etree
-        import re
+        # srgbClr
+        for child in elem.iter():
+            tag = child.tag.split('}')[-1] if '}' in child.tag else child.tag
+            if tag == 'srgbClr':
+                val = child.get('val','')
+                if val: return _hex(val)
+            elif tag == 'sysClr':
+                val = child.get('lastClr','')
+                if val: return _hex(val)
+            elif tag == 'prstClr':
+                # preset colors
+                prstMap = {'white':(255,255,255),'black':(0,0,0),'red':(255,0,0),
+                           'blue':(0,0,255),'yellow':(255,255,0),'green':(0,128,0)}
+                return prstMap.get(child.get('val',''), (128,128,128))
+    except: pass
+    return None
 
+
+def _bg_color(slide) -> tuple:
+    """استخراج لون خلفية الشريحة"""
+    try:
+        # محاولة 1: pptx API
+        fill = slide.background.fill
+        if fill.type is not None:
+            c = fill.fore_color.rgb
+            return (c.r, c.g, c.b)
+    except: pass
+    try:
+        # محاولة 2: XML مباشر
         bg_elem = slide.background._element
-        grad_fill = bg_elem.find('.//' + qn('a:gradFill'))
-        if grad_fill is not None:
-            stops = []
-            for gs in grad_fill.findall('.//' + qn('a:gs')):
-                pos = int(gs.get('pos', '0')) / 100000
-                srgb = gs.find('.//' + qn('a:srgbClr'))
-                if srgb is not None:
-                    val = srgb.get('val', 'FFFFFF')
-                    stops.append((pos, _hex_to_rgb(val)))
-            if len(stops) >= 2:
-                img = _draw_gradient(W, H, stops)
-    except Exception:
-        pass
-
-    return img
+        c = _read_color_xml(bg_elem)
+        if c: return c
+    except: pass
+    return (255, 255, 255)
 
 
-def _draw_gradient(W: int, H: int, stops: list):
-    """يرسم gradient عمودي بين عدة ألوان."""
-    from PIL import Image
-    import numpy as np
-
-    arr = np.zeros((H, W, 3), dtype=np.uint8)
-    stops_sorted = sorted(stops, key=lambda x: x[0])
-
-    for y in range(H):
-        t = y / H
-        # إيجاد الـ stop المناسب
-        c1 = stops_sorted[0][1]
-        c2 = stops_sorted[-1][1]
-        for i in range(len(stops_sorted)-1):
-            p0, col0 = stops_sorted[i]
-            p1, col1 = stops_sorted[i+1]
-            if p0 <= t <= p1:
-                if p1 - p0 < 0.001:
-                    local = 0
-                else:
-                    local = (t - p0) / (p1 - p0)
-                c1 = tuple(int(col0[j] + (col1[j] - col0[j]) * local) for j in range(3))
-                c2 = c1
-                break
-        arr[y, :] = c1
-
-    return Image.fromarray(arr, "RGB")
-
-
-def _draw_shape(img, draw, shape, W: int, H: int):
-    from pptx.enum.shapes import MSO_SHAPE_TYPE
-    from PIL import Image
-
-    left   = _px(shape.left)
-    top    = _px(shape.top)
-    width  = _px(shape.width)
-    height = _px(shape.height)
-
-    # ── رسم خلفية الشكل ──────────────────────────────────────────────
+def _shape_fill_color(shape) -> Optional[tuple]:
     try:
         fill = shape.fill
-        ftype = fill.type
-        if ftype is not None and width > 0 and height > 0:
-            fc = _rgb_from_pptx(fill.fore_color)
-            if fc:
-                # شكل مستطيل أو مدوّر
-                _draw_rect_shape(img, draw, shape, left, top, width, height, fc)
-    except Exception:
-        pass
-
-    # ── رسم النص ─────────────────────────────────────────────────────
-    if shape.has_text_frame:
-        _draw_text_frame(img, draw, shape, left, top, width, height)
-
-
-def _draw_rect_shape(img, draw, shape, left, top, width, height, fill_color):
-    from PIL import Image, ImageDraw
-    from pptx.enum.shapes import MSO_SHAPE_TYPE
-
-    # تحقق نوع الشكل للحواف المدوّرة
+        if fill.type is not None:
+            c = fill.fore_color.rgb
+            return (c.r, c.g, c.b)
+    except: pass
     try:
-        shape_type = shape.shape_type
-        # oval/ellipse
-        if shape_type == MSO_SHAPE_TYPE.FREEFORM or \
-           (hasattr(shape, 'auto_shape_type') and 'OVAL' in str(shape.auto_shape_type)):
-            draw.ellipse([left, top, left+width, top+height], fill=fill_color)
-            return
-    except Exception:
-        pass
-
-    draw.rectangle([left, top, left+width, top+height], fill=fill_color)
+        sp_elem = shape._element
+        c = _read_color_xml(sp_elem.find('.//{http://schemas.openxmlformats.org/drawingml/2006/main}solidFill'))
+        if c: return c
+    except: pass
+    return None
 
 
-def _draw_text_frame(img, draw, shape, left, top, width, height):
+def _text_color(run) -> tuple:
+    try:
+        rgb = run.font.color.rgb
+        return (rgb.r, rgb.g, rgb.b)
+    except: pass
+    try:
+        r_elem = run._r
+        c = _read_color_xml(r_elem)
+        if c: return c
+    except: pass
+    return None  # None = use smart default
+
+
+def _smart_text_color(bg: tuple) -> tuple:
+    """اختر لون النص تلقائياً بحسب لمعان الخلفية"""
+    lum = 0.299*bg[0] + 0.587*bg[1] + 0.114*bg[2]
+    return (255,255,255) if lum < 128 else (20,20,20)
+
+
+def _render_slide(slide, W, H):
+    from PIL import Image, ImageDraw
+    bg = _bg_color(slide)
+    img = _draw_bg(bg, W, H, slide)
+    draw = ImageDraw.Draw(img)
+    for shape in slide.shapes:
+        try: _draw_shape(draw, img, shape, W, H, bg)
+        except: pass
+    return img
+
+
+def _draw_bg(bg_color, W, H, slide):
+    """رسم الخلفية مع gradient إذا وُجد"""
+    from PIL import Image
+    try:
+        # قراءة الـ gradient من XML
+        from lxml import etree
+        ns = 'http://schemas.openxmlformats.org/drawingml/2006/main'
+        bg_elem = slide.background._element
+        grad = bg_elem.find(f'.//{{{ns}}}gradFill')
+        if grad is not None:
+            stops = []
+            for gs in grad.findall(f'.//{{{ns}}}gs'):
+                pos = int(gs.get('pos','0')) / 100000.0
+                c = _read_color_xml(gs)
+                if c: stops.append((pos, c))
+            if len(stops) >= 2:
+                return _gradient_img(W, H, sorted(stops, key=lambda x: x[0]))
+    except: pass
+    # لون صلب مع تدرج خفيف
+    return _soft_gradient(bg_color, W, H)
+
+
+def _soft_gradient(color, W, H):
+    """تدرج خفيف من اللون نفسه"""
+    from PIL import Image
+    img = Image.new("RGB", (W, H))
+    px = img.load()
+    r,g,b = color
+    for y in range(H):
+        t = y/H
+        # أفتح قليلاً في الأعلى
+        factor = 1.0 + 0.25*(1-t) - 0.1*t
+        nr = min(255, int(r*factor))
+        ng = min(255, int(g*factor))
+        nb = min(255, int(b*factor))
+        for x in range(W): px[x,y] = (nr,ng,nb)
+    return img
+
+
+def _gradient_img(W, H, stops):
+    from PIL import Image
+    img = Image.new("RGB", (W, H))
+    px = img.load()
+    for y in range(H):
+        t = y/H
+        c1,c2 = stops[0][1], stops[-1][1]
+        for i in range(len(stops)-1):
+            p0,col0 = stops[i]; p1,col1 = stops[i+1]
+            if p0 <= t <= p1:
+                lt = (t-p0)/(p1-p0) if p1>p0 else 0
+                c1 = tuple(int(col0[j]+(col1[j]-col0[j])*lt) for j in range(3))
+                break
+        for x in range(W): px[x,y] = c1
+    return img
+
+
+def _draw_shape(draw, img, shape, W, H, slide_bg):
     from PIL import ImageFont
-    from pptx.enum.text import PP_ALIGN
+    EMU = 914400.0; DPI = 96
+    L = int((shape.left  or 0)/EMU*DPI)
+    T = int((shape.top   or 0)/EMU*DPI)
+    SW = int((shape.width or 0)/EMU*DPI)
+    SH = int((shape.height or 0)/EMU*DPI)
 
-    tf = shape.text_frame
-    y_cursor = top + 6
+    # خلفية الشكل
+    fc = _shape_fill_color(shape)
+    if fc and SW > 0 and SH > 0:
+        draw.rectangle([L,T,L+SW,T+SH], fill=fc)
 
-    for para in tf.paragraphs:
-        if not para.text.strip():
-            y_cursor += 8
-            continue
+    if not shape.has_text_frame: return
 
-        # حجم الخط ولونه من أول run
-        fsize = 14
-        fcolor = (30, 30, 30)
-        bold = False
+    # لون افتراضي للنص بحسب خلفية الشريحة
+    default_color = _smart_text_color(fc or slide_bg)
+    y = T + 6
+    for para in shape.text_frame.paragraphs:
+        text = para.text.strip()
+        if not text: y += 8; continue
+        # حجم ولون من الـ runs
+        fs, tc, bold = 14, None, False
         for run in para.runs:
             try:
-                if run.font.size:
-                    fsize = max(7, min(int(run.font.size / 12700), 72))
-                if run.font.bold:
-                    bold = True
-                c = _rgb_from_pptx(run.font.color)
-                if c:
-                    fcolor = c
-            except Exception:
-                pass
+                if run.font.size: fs = max(8, min(int(run.font.size/12700), 60))
+                if run.font.bold: bold = True
+                c = _text_color(run)
+                if c: tc = c
+            except: pass
             break
-
-        # اختر خط مناسب
-        font = _get_font(fsize, bold)
-
-        text = para.text.strip()
-        if not text:
-            continue
-
-        # محاذاة
-        try:
-            align = para.alignment
-        except Exception:
-            align = None
-
-        # اقتصاص النص إذا كان طويلاً
-        text = _wrap_text(text, font, width - 12)
-
-        # x بحسب المحاذاة
-        x = left + 6
-        if align == PP_ALIGN.CENTER:
-            x = left + width // 2 - _text_width(text.split('\n')[0], font) // 2
-        elif align == PP_ALIGN.RIGHT or align is None:
-            # العربية RTL — نضع النص على اليمين
-            x = left + width - _text_width(text.split('\n')[0], font) - 6
-
-        draw.text((x, y_cursor), text, fill=fcolor, font=font)
-        lines = text.count('\n') + 1
-        y_cursor += (fsize + 4) * lines
-
-        if y_cursor > top + height:
-            break
+        if tc is None: tc = default_color
+        font = _find_font(fs, bold)
+        lines = _wrap(text, font, SW-12)
+        for line in lines:
+            if y >= T+SH: break
+            draw.text((L+6, y), line, fill=tc, font=font)
+            y += fs+4
+        if y >= T+SH: break
 
 
-def _get_font(size: int, bold: bool = False):
-    from PIL import ImageFont
-
-    paths = [
-        "/home/user/.fonts/cairo/Cairo.ttf",
-        "/root/.fonts/cairo/Cairo.ttf",
-        "/usr/share/fonts/truetype/cairo/Cairo.ttf",
-        "/tmp/fonts/cairo/Cairo.ttf",
-        "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf" if bold else "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
-        "/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf" if bold else "/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf",
-        "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
-    ]
-    for p in paths:
-        try:
-            return ImageFont.truetype(p, size)
-        except Exception:
-            continue
-    return ImageFont.load_default()
-
-
-def _text_width(text: str, font) -> int:
-    try:
-        from PIL import Image, ImageDraw
-        tmp = ImageDraw.Draw(Image.new("RGB", (1, 1)))
-        bbox = tmp.textbbox((0, 0), text, font=font)
-        return bbox[2] - bbox[0]
-    except Exception:
-        return len(text) * 8
-
-
-def _wrap_text(text: str, font, max_width: int) -> str:
-    if max_width <= 0:
-        return text
+def _wrap(text, font, max_w):
+    from PIL import ImageDraw, Image
+    if max_w <= 20: return [text]
+    d = ImageDraw.Draw(Image.new("RGB",(1,1)))
+    def tw(t):
+        try: bb=d.textbbox((0,0),t,font=font); return bb[2]-bb[0]
+        except: return len(t)*8
+    if tw(text) <= max_w: return [text]
     words = text.split()
-    lines = []
-    current = ""
-    for word in words:
-        test = (current + " " + word).strip()
-        if _text_width(test, font) <= max_width:
-            current = test
+    lines, cur = [], ""
+    for w in words:
+        test = (cur+" "+w).strip()
+        if tw(test) <= max_w: cur=test
         else:
-            if current:
-                lines.append(current)
-            current = word
-    if current:
-        lines.append(current)
-    return "\n".join(lines) if lines else text
+            if cur: lines.append(cur)
+            cur=w
+    if cur: lines.append(cur)
+    return lines or [text]
 
 
-# ─── Watermark ────────────────────────────────────────────────────────────────
-def _add_watermark(b64_jpeg: str) -> str:
-    import os
-    from PIL import Image, ImageDraw, ImageFont
-
-    data = base64.b64decode(b64_jpeg)
-    img = Image.open(io.BytesIO(data)).convert("RGBA")
+def _add_watermark(img):
+    from PIL import Image, ImageDraw
     W, H = img.size
-
-    overlay = Image.new("RGBA", (W, H), (0, 0, 0, 0))
-    draw = ImageDraw.Draw(overlay)
-
-    font_size = max(24, W // 24)
-    font = _get_font(font_size, bold=True)
+    overlay = Image.new("RGBA",(W,H),(0,0,0,0))
+    d = ImageDraw.Draw(overlay)
+    font = _find_font(max(22, W//26), bold=True)
     text = "مذكرتي Pro — معاينة فقط"
-
-    # قياس النص
     try:
-        tmp_draw = ImageDraw.Draw(Image.new("RGBA", (1,1)))
-        bbox = tmp_draw.textbbox((0,0), text, font=font)
-        tw = bbox[2] - bbox[0]
-        th = bbox[3] - bbox[1]
-    except Exception:
-        tw, th = font_size * 15, font_size + 4
-
-    # إنشاء طبقة للعلامة المائية المدوّرة
-    txt_layer = Image.new("RGBA", (tw + 40, th + 20), (0,0,0,0))
-    td = ImageDraw.Draw(txt_layer)
-    td.text((20, 10), text, fill=(255,255,255,80), font=font)
-    rotated = txt_layer.rotate(-30, expand=True)
-
-    # توزيع العلامة المائية بشكل شبكي
-    step_x = max(rotated.width + 40, W // 3)
-    step_y = max(rotated.height + 30, H // 3)
-    for row in range(-1, H // step_y + 2):
-        for col in range(-1, W // step_x + 2):
-            x = col * step_x - rotated.width // 2
-            y = row * step_y - rotated.height // 2
-            overlay.paste(rotated, (x, y), rotated)
-
-    combined = Image.alpha_composite(img, overlay).convert("RGB")
-    buf = io.BytesIO()
-    combined.save(buf, format="JPEG", quality=85, optimize=True)
-    return base64.b64encode(buf.getvalue()).decode("ascii")
+        bb = d.textbbox((0,0),text,font=font)
+        tw,th = bb[2]-bb[0], bb[3]-bb[1]
+    except:
+        tw,th = len(text)*14, 28
+    pad=40
+    tl = Image.new("RGBA",(tw+pad,th+pad),(0,0,0,0))
+    td = ImageDraw.Draw(tl)
+    td.text((pad//2,pad//2), text, fill=(255,255,255,80), font=font)
+    rot = tl.rotate(-30, expand=True)
+    rw,rh = rot.size
+    sx = max(rw+30, W//3)
+    sy = max(rh+20, H//3)
+    for row in range(-1, H//sy+2):
+        for col in range(-1, W//sx+2):
+            overlay.paste(rot, (col*sx-rw//2, row*sy-rh//2), rot)
+    out = Image.alpha_composite(img.convert("RGBA"), overlay).convert("RGB")
+    return out
