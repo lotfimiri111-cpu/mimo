@@ -1463,12 +1463,26 @@ function goTo(n){
 function validate0(){
   const fields=[['studentName','fld-sn'],['major','fld-mj'],['university','fld-uni'],['supervisor','fld-sup'],['titleAr','fld-ta']];
   let ok=true;
+  let firstErr=null;
   fields.forEach(([id,fid])=>{
     const el=document.getElementById(id),fc=document.getElementById(fid);
-    if(!el?.value.trim()){fc?.classList.add('has-err');el?.classList.add('ferr');ok=false;}
-    else{fc?.classList.remove('has-err');el?.classList.remove('ferr');}
+    if(!el) return;
+    const val=(el.value||'').trim();
+    if(!val){
+      fc?.classList.add('has-err');
+      el.classList.add('ferr');
+      if(!firstErr) firstErr=el;
+      ok=false;
+    } else {
+      fc?.classList.remove('has-err');
+      el.classList.remove('ferr');
+    }
   });
-  if(!ok){document.querySelector('.has-err input,.has-err textarea')?.focus();return;}
+  if(!ok){
+    if(firstErr) firstErr.scrollIntoView({behavior:'smooth',block:'center'});
+    setTimeout(()=>{ if(firstErr) firstErr.focus(); },300);
+    return;
+  }
   goTo(1);
 }
 document.addEventListener('input',e=>{
@@ -1657,7 +1671,7 @@ function fillDemo(){
   document.getElementById('asbar-msg').textContent=t('demo_loaded');
   const b=document.getElementById('asbar'); b.classList.add('vis');
   setTimeout(()=>b.classList.remove('vis'),2800);
-  goTo(0);
+  goTo(1);  // الانتقال مباشرة للخطوة التالية بعد التعبئة
 }
 
 // ═══════════════════════════════════════════════════════
@@ -1844,7 +1858,7 @@ async function generate(){
     const isFallback = false; // v17: single unified engine, no fallbacks
     // تحويل base64 → Blob (للمعاينة فقط — ملف PPTX الحقيقي على الخادم)
     setP(100,t('modal_ok'));await sl(300);
-    showOk(json.data,d.studentName,false,json.filename,json.presentation_id,json.degree||d.degree||'licence',json.title_ar||d.titleAr||'',json.preview_slides||[]);
+    showOk(json.data,d.studentName,false,json.filename,json.presentation_id,json.degree||d.degree||'licence',json.title_ar||d.titleAr||'',json.preview_slides||[],json.slides||0);
     localStorage.removeItem('mp_v4');
   }catch(e){
     clearTimeout(_timeoutId);
@@ -1896,7 +1910,9 @@ let _selectedMethod = null;
 let _receiptFile = null;
 let _previewSlideIdx = 0;
 
-function showOk(b64Data, name, isFallback, serverFilename, presId, degree, titleAr, inlineSlides){
+let _totalSlides = 0;
+
+function showOk(b64Data, name, isFallback, serverFilename, presId, degree, titleAr, inlineSlides, totalSlides){
   _currentPresId = presId;
   _currentB64 = b64Data;
   _currentFilename = serverFilename || 'presentation.pptx';
@@ -1904,6 +1920,7 @@ function showOk(b64Data, name, isFallback, serverFilename, presId, degree, title
   _currentDegree = degree || 'licence';
   _currentTitleAr = titleAr || '';
   _previewSlideIdx = 0;
+  _totalSlides = totalSlides || 0;
   // ✅ حفظ الصور الواردة من السيرفر (LibreOffice — دقة كاملة)
   _previewSlides = inlineSlides && inlineSlides.length ? inlineSlides : [];
   closeM();
@@ -2065,8 +2082,9 @@ function _showImgSlide(idx){
   }
   imgEl.src = 'data:image/jpeg;base64,'+item.src;
   const total = _pptxSlides.length;
+  const realTotal = _totalSlides > total ? _totalSlides : total;
   const ctr = document.getElementById('slideCounter');
-  if(ctr) ctr.textContent='الشريحة '+(idx+1)+' من '+total;
+  if(ctr) ctr.textContent='الشريحة '+(idx+1)+' من '+realTotal;
   document.getElementById('prevSlideBtn').disabled=idx<=0;
   document.getElementById('nextSlideBtn').disabled=idx>=total-1;
 }

@@ -8,7 +8,7 @@ from typing import List
 log = logging.getLogger(__name__)
 _cache: dict = {}
 _cache_lock = threading.Lock()
-MAX_SLIDES = 3
+MAX_SLIDES = 20  # عرض جميع الشرائح في المعاينة (ما تراه = ما تحصل عليه)
 
 
 def get_cached_preview(pid):
