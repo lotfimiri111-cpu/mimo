@@ -1844,7 +1844,7 @@ async function generate(){
     const isFallback = false; // v17: single unified engine, no fallbacks
     // تحويل base64 → Blob (للمعاينة فقط — ملف PPTX الحقيقي على الخادم)
     setP(100,t('modal_ok'));await sl(300);
-    showOk(json.data,d.studentName,false,json.filename,json.presentation_id,json.degree||d.degree||'licence',json.title_ar||d.titleAr||'',json.preview_slides||[]);
+    showOk(json.data,d.studentName,false,json.filename,json.presentation_id,json.degree||d.degree||'licence',json.title_ar||d.titleAr||'',json.preview_slides||[],json.slides||0);
     localStorage.removeItem('mp_v4');
   }catch(e){
     clearTimeout(_timeoutId);
@@ -1896,7 +1896,9 @@ let _selectedMethod = null;
 let _receiptFile = null;
 let _previewSlideIdx = 0;
 
-function showOk(b64Data, name, isFallback, serverFilename, presId, degree, titleAr, inlineSlides){
+let _totalSlides = 0;
+
+function showOk(b64Data, name, isFallback, serverFilename, presId, degree, titleAr, inlineSlides, totalSlides){
   _currentPresId = presId;
   _currentB64 = b64Data;
   _currentFilename = serverFilename || 'presentation.pptx';
@@ -1904,18 +1906,13 @@ function showOk(b64Data, name, isFallback, serverFilename, presId, degree, title
   _currentDegree = degree || 'licence';
   _currentTitleAr = titleAr || '';
   _previewSlideIdx = 0;
-  _previewSlides = (inlineSlides && inlineSlides.length) ? inlineSlides : [];
+  _totalSlides = totalSlides || 0;
+  // ✅ حفظ الصور الواردة من السيرفر (LibreOffice — دقة كاملة)
+  _previewSlides = inlineSlides && inlineSlides.length ? inlineSlides : [];
   closeM();
   showLockedPreviewBanner();
-  if(_previewSlides.length){
-    // صور المعاينة وصلت مباشرة مع الـ response — اعرضها فوراً
-    showPreviewSlide(0);
-    const msg = document.getElementById('previewLoadingMsg');
-    if(msg) msg.style.display = 'none';
-  } else {
-    // لم تصل صور — استخدم الـ polling لجلبها من السيرفر
-    loadRealPreview(presId);
-  }
+  // عرض المعاينة من صور السيرفر الدقيقة
+  setTimeout(() => renderPptxInBrowser(b64Data), 100);
 }
 
 function showLockedPreviewBanner(){
@@ -1928,70 +1925,168 @@ function showLockedPreviewBanner(){
     <div class="preview-lock">
       <div class="pl-icon">🔒</div>
       <div class="pl-text">
-        <h4>العرض جاهز — محمي حتى الدفع</h4>
-        <p>أدّ 800 دج للحصول على ملف PPTX الكامل القابل للتعديل</p>
+        <h4>${t('preview_lock_title')||'العرض جاهز — محمي حتى الدفع'}</h4>
+        <p>${t('preview_lock_sub')||'أدّ 800 دج للحصول على ملف PPTX الكامل القابل للتعديل'}</p>
       </div>
       <div class="pl-actions">
-        <button class="pl-pay-btn" onclick="openPayOv()">💳 اشتري الآن — 800 دج</button>
-        <button class="pl-code-btn" onclick="openCodeOv()">🔑 عندي كود</button>
+        <button class="pl-pay-btn" onclick="openPayOv()">💳 ${t('pay_now')||'اشتري الآن — 800 دج'}</button>
+        <button class="pl-code-btn" onclick="openCodeOv()">🔑 ${t('have_code')||'عندي كود'}</button>
       </div>
     </div>
-    <div class="preview-container" id="previewContainer">
-      <div id="previewSlideWrap" style="position:relative;width:100%;aspect-ratio:16/9;background:#0a0f1e;border-radius:10px;display:flex;align-items:center;justify-content:center;overflow:hidden">
-        <div id="previewLoadingMsg" style="text-align:center;color:rgba(255,255,255,.6)">
-          <div style="font-size:32px;margin-bottom:10px;animation:mspin 1.5s linear infinite;display:inline-block">⚙️</div>
-          <div style="font-size:13px">جاري تحميل معاينة الشرائح...</div>
+    <div style="position:relative;margin-top:14px;border-radius:14px;overflow:hidden;box-shadow:0 4px 32px rgba(0,0,0,.35)">
+      <!-- حاوية الشرائح -->
+      <div id="pptx-slide-container" style="width:100%;background:#1a1a2e;min-height:400px;position:relative;aspect-ratio:16/9;overflow:hidden">
+        <!-- loading -->
+        <div id="pptx-loading-overlay" style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#1a1a2e;z-index:10">
+          <div style="font-size:36px;animation:mspin 1.5s linear infinite">⚙️</div>
+          <div style="color:rgba(255,255,255,.7);font-size:14px;margin-top:12px">جاري تحميل المعاينة...</div>
         </div>
-        <img id="previewImg" src="" alt="شريحة"
-          style="display:none;width:100%;height:100%;object-fit:contain;user-select:none;-webkit-user-select:none;pointer-events:none"
-          oncontextmenu="return false" draggable="false">
-        <div style="position:absolute;inset:0;pointer-events:none;display:flex;flex-direction:column;justify-content:space-around;align-items:center;overflow:hidden">
-          <div style="transform:rotate(-30deg);font-size:clamp(14px,2.5vw,26px);font-weight:900;color:rgba(255,255,255,0.13);white-space:nowrap;letter-spacing:3px">مذكرتي Pro — معاينة فقط &nbsp;&nbsp; مذكرتي Pro — معاينة فقط</div>
-          <div style="transform:rotate(-30deg);font-size:clamp(14px,2.5vw,26px);font-weight:900;color:rgba(255,255,255,0.13);white-space:nowrap;letter-spacing:3px">مذكرتي Pro — معاينة فقط &nbsp;&nbsp; مذكرتي Pro — معاينة فقط</div>
-          <div style="transform:rotate(-30deg);font-size:clamp(14px,2.5vw,26px);font-weight:900;color:rgba(255,255,255,0.13);white-space:nowrap;letter-spacing:3px">مذكرتي Pro — معاينة فقط &nbsp;&nbsp; مذكرتي Pro — معاينة فقط</div>
+        <!-- iframe لعرض الشريحة معزولة -->
+        <iframe id="pptx-slide-frame"
+          style="display:none;width:100%;height:100%;border:none;position:absolute;inset:0"
+          sandbox="allow-scripts allow-same-origin"
+          oncontextmenu="return false"></iframe>
+        <!-- طبقة حماية فوق الـ iframe -->
+        <div id="preview-shield" style="position:absolute;inset:0;z-index:20;cursor:default"
+          oncontextmenu="return false" onselectstart="return false" ondragstart="return false">
+          <!-- علامة مائية -->
+          <div style="position:absolute;inset:0;display:flex;flex-direction:column;justify-content:space-evenly;align-items:center;pointer-events:none;overflow:hidden;gap:0">
+            <div style="transform:rotate(-30deg);font-size:clamp(16px,2.8vw,26px);font-weight:900;color:rgba(255,255,255,0.13);white-space:nowrap;letter-spacing:4px;font-family:Cairo,sans-serif">مذكرتي Pro &nbsp;—&nbsp; معاينة فقط &nbsp;&nbsp;&nbsp; مذكرتي Pro &nbsp;—&nbsp; معاينة فقط</div>
+            <div style="transform:rotate(-30deg);font-size:clamp(16px,2.8vw,26px);font-weight:900;color:rgba(255,255,255,0.13);white-space:nowrap;letter-spacing:4px;font-family:Cairo,sans-serif">مذكرتي Pro &nbsp;—&nbsp; معاينة فقط &nbsp;&nbsp;&nbsp; مذكرتي Pro &nbsp;—&nbsp; معاينة فقط</div>
+            <div style="transform:rotate(-30deg);font-size:clamp(16px,2.8vw,26px);font-weight:900;color:rgba(255,255,255,0.13);white-space:nowrap;letter-spacing:4px;font-family:Cairo,sans-serif">مذكرتي Pro &nbsp;—&nbsp; معاينة فقط &nbsp;&nbsp;&nbsp; مذكرتي Pro &nbsp;—&nbsp; معاينة فقط</div>
+            <div style="transform:rotate(-30deg);font-size:clamp(16px,2.8vw,26px);font-weight:900;color:rgba(255,255,255,0.13);white-space:nowrap;letter-spacing:4px;font-family:Cairo,sans-serif">مذكرتي Pro &nbsp;—&nbsp; معاينة فقط &nbsp;&nbsp;&nbsp; مذكرتي Pro &nbsp;—&nbsp; معاينة فقط</div>
+          </div>
         </div>
       </div>
-      <div class="preview-nav">
-        <button class="pn-btn" id="prevSlideBtn" onclick="previewPrev()" disabled>&#8594; السابقة</button>
+      <!-- تنقل -->
+      <div class="preview-nav" style="position:relative;z-index:30;background:rgba(10,15,30,.9)">
+        <button class="pn-btn" id="prevSlideBtn" onclick="pptxNavPrev()" disabled>&#8594; السابقة</button>
         <span class="pn-counter" id="slideCounter">جاري التحميل...</span>
-        <button class="pn-btn" id="nextSlideBtn" onclick="previewNext()" disabled>التالية &#8592;</button>
+        <button class="pn-btn" id="nextSlideBtn" onclick="pptxNavNext()" disabled>التالية &#8592;</button>
       </div>
     </div>
     <button class="bnew" style="margin-top:10px" onclick="if(confirm('سيتم حذف العرض الحالي وإنشاء عرض جديد.')){localStorage.removeItem('mp_v4');location.reload()}">🔄 إنشاء عرض جديد</button>
-  `;
+  \`;
   const bgen = document.getElementById('bgen');
   if(bgen && bgen.parentNode) bgen.parentNode.insertBefore(banner, bgen.nextSibling);
   else document.querySelector('.main').appendChild(banner);
   setTimeout(()=>banner.scrollIntoView({behavior:'smooth',block:'center'}), 150);
 }
 
-function renderPptxPreview(b64Data){ /* غير مستخدمة */ }
-function pptxNext(){ previewNext(); }
-function pptxPrev(){ previewPrev(); }
-// ── polling fallback للمعاينة من السيرفر ────────────────────────────────────
-async function loadRealPreview(presId, attempt){
-  attempt = attempt || 0;
-  const MAX = 15, RETRY_MS = 3000;
-  try {
-    const r = await fetch('/preview/' + presId);
-    if(!r.ok) throw new Error('HTTP ' + r.status);
-    const j = await r.json();
-    if(j.slides && j.slides.length){
-      _previewSlides = j.slides;
-      showPreviewSlide(0);
-      const msg = document.getElementById('previewLoadingMsg');
-      if(msg) msg.style.display = 'none';
-    } else if(attempt < MAX){
-      setTimeout(()=>loadRealPreview(presId, attempt+1), RETRY_MS);
-    } else {
-      const msg = document.getElementById('previewLoadingMsg');
-      if(msg) msg.innerHTML = '<div style="font-size:13px;color:rgba(255,200,100,.8)">⚠️ تعذّر تحميل المعاينة — اشتر للتحميل</div>';
-    }
-  } catch(e) {
-    if(attempt < MAX) setTimeout(()=>loadRealPreview(presId, attempt+1), RETRY_MS);
-    else console.warn('Preview load failed:', e);
+
+// ── رسم PPTX في المتصفح بدقة كاملة ─────────────────────────────────────────
+let _pptxSlides = [];   // قائمة HTML لكل شريحة
+let _pptxCurrent = 0;
+
+async function renderPptxInBrowser(b64Data){
+  // المعاينة الدقيقة: الصور المُولَّدة على السيرفر بواسطة LibreOffice
+  // تطابق 100% مع الملف الحقيقي — لا نستخدم pptx2html في المتصفح
+
+  // أولاً: إذا أرسل السيرفر صور inline مع الـ response — نعرضها فوراً
+  if(_previewSlides && _previewSlides.length){
+    _pptxSlides = _previewSlides.map(s => ({type:'img', src:s}));
+    _pptxCurrent = 0;
+    _showImgSlide(0);
+    const loading = document.getElementById('pptx-loading-overlay');
+    const frame   = document.getElementById('pptx-slide-frame');
+    if(loading) loading.style.display='none';
+    if(frame) frame.style.display='none';
+    return;
   }
+
+  // ثانياً: اجلب الصور من endpoint /preview/{id} (ليبر أوفيس على السيرفر)
+  await loadRealPreviewIntoFrame(_currentPresId);
 }
+
+function _showPptxSlide(idx){
+  if(!_pptxSlides.length) return;
+  idx = Math.max(0, Math.min(idx, _pptxSlides.length-1));
+  _pptxCurrent = idx;
+  const frame = document.getElementById('pptx-slide-frame');
+  if(frame){
+    // ارسم الشريحة في iframe معزول
+    const html = _pptxSlides[idx].html || _pptxSlides[idx];
+    const doc = frame.contentDocument || frame.contentWindow.document;
+    doc.open();
+    doc.write(\`<!DOCTYPE html><html dir="rtl"><head>
+      <meta charset="utf-8">
+      <style>
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{width:100%;height:100%;overflow:hidden;background:#fff}
+        .slide{width:100%;height:100%;position:relative}
+      </style>
+    </head><body>\${html}</body></html>\`);
+    doc.close();
+  }
+  const total = _pptxSlides.length;
+  const ctr = document.getElementById('slideCounter');
+  if(ctr) ctr.textContent = 'الشريحة '+(idx+1)+' من '+total;
+  document.getElementById('prevSlideBtn').disabled = idx<=0;
+  document.getElementById('nextSlideBtn').disabled = idx>=total-1;
+}
+
+async function loadRealPreviewIntoFrame(presId){
+  // fallback: الصور من السيرفر بدلاً من HTML
+  const loading = document.getElementById('pptx-loading-overlay');
+  const container = document.getElementById('pptx-slide-container');
+  const MAX=20, WAIT=2000;
+  for(let i=0;i<MAX;i++){
+    try{
+      const r = await fetch('/preview/'+presId);
+      if(!r.ok) throw new Error('http '+r.status);
+      const j = await r.json();
+      if(j.ok && j.slides && j.slides.length){
+        // عرض بـ img tags بدلاً من iframe
+        _pptxSlides = j.slides.map(s=>({type:'img',src:s}));
+        _pptxCurrent = 0;
+        _showImgSlide(0);
+        if(loading) loading.style.display='none';
+        const frame = document.getElementById('pptx-slide-frame');
+        if(frame) frame.style.display='none';
+        return;
+      }
+    }catch(e){ console.log('preview poll',i,e); }
+    await new Promise(r=>setTimeout(r,WAIT));
+  }
+  if(loading) loading.innerHTML='<div style="color:rgba(255,200,100,.8);padding:20px">⚠️ تعذّر تحميل المعاينة</div>';
+}
+
+function _showImgSlide(idx){
+  if(!_pptxSlides.length) return;
+  idx = Math.max(0,Math.min(idx,_pptxSlides.length-1));
+  _pptxCurrent = idx;
+  const container = document.getElementById('pptx-slide-container');
+  const item = _pptxSlides[idx];
+  let imgEl = document.getElementById('pptx-img-display');
+  if(!imgEl){
+    imgEl = document.createElement('img');
+    imgEl.id = 'pptx-img-display';
+    imgEl.style.cssText='width:100%;height:100%;object-fit:contain;position:absolute;inset:0;user-select:none;pointer-events:none';
+    imgEl.oncontextmenu = ()=>false;
+    imgEl.draggable = false;
+    container.insertBefore(imgEl, container.firstChild);
+  }
+  imgEl.src = 'data:image/jpeg;base64,'+item.src;
+  const total = _pptxSlides.length;
+  const realTotal = _totalSlides > total ? _totalSlides : total;
+  const ctr = document.getElementById('slideCounter');
+  if(ctr) ctr.textContent='الشريحة '+(idx+1)+' من '+realTotal;
+  document.getElementById('prevSlideBtn').disabled=idx<=0;
+  document.getElementById('nextSlideBtn').disabled=idx>=total-1;
+}
+
+function pptxNavNext(){
+  if(_pptxSlides[0] && _pptxSlides[0].type==='img') _showImgSlide(_pptxCurrent+1);
+  else _showPptxSlide(_pptxCurrent+1);
+}
+function pptxNavPrev(){
+  if(_pptxSlides[0] && _pptxSlides[0].type==='img') _showImgSlide(_pptxCurrent-1);
+  else _showPptxSlide(_pptxCurrent-1);
+}
+function renderPptxPreview(b64){ /* legacy - unused */ }
+function pptxNext(){ pptxNavNext(); }
+function pptxPrev(){ pptxNavPrev(); }
+
 
 function showPreviewSlide(idx){
   if(!_previewSlides.length) return;

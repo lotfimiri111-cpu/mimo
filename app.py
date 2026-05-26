@@ -66,9 +66,23 @@ init_db()
 def _safe_filename(name: str) -> str:
     if not name:
         return f"prs_{int(time.time())}"
+    # جرّب ASCII أولاً
     normalized = unicodedata.normalize("NFKD", name)
     ascii_str = normalized.encode("ascii", "ignore").decode("ascii")
     safe = "".join(c if c.isalnum() else "_" for c in ascii_str).strip("_")
+    if safe:
+        return safe[:24]
+    # للأسماء العربية: transliteration بسيط
+    AR_MAP = {
+        'أ':'a','ا':'a','إ':'a','آ':'a','ب':'b','ت':'t','ث':'th','ج':'j','ح':'h',
+        'خ':'kh','د':'d','ذ':'dh','ر':'r','ز':'z','س':'s','ش':'sh','ص':'s',
+        'ض':'d','ط':'t','ظ':'z','ع':'a','غ':'gh','ف':'f','ق':'q','ك':'k',
+        'ل':'l','م':'m','ن':'n','ه':'h','و':'w','ي':'y','ى':'a','ة':'a',
+        'ء':'a',
+        ' ':'_','ّ':'','َ':'','ً':'','ُ':'','ٌ':'','ِ':'','ٍ':'','ْ':'',
+    }
+    trans = "".join(AR_MAP.get(c, c) for c in name)
+    safe = "".join(c if c.isalnum() or c == '_' else '' for c in trans).strip('_')
     if not safe:
         safe = f"student_{int(time.time()) % 100000}"
     return safe[:24]
