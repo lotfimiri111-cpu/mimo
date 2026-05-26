@@ -122,14 +122,23 @@ def _bg_color(slide) -> tuple:
 def _shape_fill_color(shape) -> Optional[tuple]:
     try:
         fill = shape.fill
-        if fill.type is not None:
-            c = fill.fore_color.rgb
-            return (c.r, c.g, c.b)
+        from pptx.enum.dml import MSO_FILL
+        # BACKGROUND(5) = شفاف — لا نرسم خلفية
+        if hasattr(MSO_FILL, 'BACKGROUND') and fill.type == MSO_FILL.BACKGROUND:
+            return None
+        if fill.type is not None and fill.type != 5:
+            try:
+                c = fill.fore_color.rgb
+                return (c.r, c.g, c.b)
+            except: pass
     except: pass
     try:
+        ns = 'http://schemas.openxmlformats.org/drawingml/2006/main'
         sp_elem = shape._element
-        c = _read_color_xml(sp_elem.find('.//{http://schemas.openxmlformats.org/drawingml/2006/main}solidFill'))
-        if c: return c
+        solid = sp_elem.find(f'.//{{{ns}}}solidFill')
+        if solid is not None:
+            c = _read_color_xml(solid)
+            if c: return c
     except: pass
     return None
 
@@ -144,7 +153,38 @@ def _text_color(run) -> tuple:
         c = _read_color_xml(r_elem)
         if c: return c
     except: pass
-    return None  # None = use smart default
+    return None
+
+def _text_color_from_xml(run) -> Optional[tuple]:
+    """قراءة لون النص من XML مباشرةً — أكثر موثوقية"""
+    # محاولة 1: pptx API
+    try:
+        rgb = run.font.color.rgb
+        return (rgb.r, rgb.g, rgb.b)
+    except: pass
+    # محاولة 2: XML مباشر
+    try:
+        # ابحث في عنصر الـ run عن lون
+        ns = 'http://schemas.openxmlformats.org/drawingml/2006/main'
+        r_elem = run._r
+        # البحث في rPr عن solidFill/srgbClr
+        rPr = r_elem.find(f'{{{ns}}}rPr')
+        if rPr is not None:
+            solid = rPr.find(f'{{{ns}}}solidFill')
+            if solid is not None:
+                c = _read_color_xml(solid)
+                if c: return c
+    except: pass
+    # محاولة 3: parent paragraph
+    try:
+        para_elem = run._r.getparent()
+        ns = 'http://schemas.openxmlformats.org/drawingml/2006/main'
+        pPr = para_elem.find(f'{{{ns}}}pPr')
+        if pPr is not None:
+            c = _read_color_xml(pPr)
+            if c: return c
+    except: pass
+    return None
 
 
 def _smart_text_color(bg: tuple) -> tuple:
@@ -222,32 +262,37 @@ def _gradient_img(W, H, stops):
 
 def _draw_shape(draw, img, shape, W, H, slide_bg):
     from PIL import ImageFont
+    from pptx.enum.dml import MSO_THEME_COLOR
     EMU = 914400.0; DPI = 96
     L = int((shape.left  or 0)/EMU*DPI)
     T = int((shape.top   or 0)/EMU*DPI)
     SW = int((shape.width or 0)/EMU*DPI)
     SH = int((shape.height or 0)/EMU*DPI)
 
-    # خلفية الشكل
+    # خلفية الشكل — نتجاهل BACKGROUND(5) لأنه شفاف
     fc = _shape_fill_color(shape)
     if fc and SW > 0 and SH > 0:
         draw.rectangle([L,T,L+SW,T+SH], fill=fc)
 
     if not shape.has_text_frame: return
 
-    # لون افتراضي للنص بحسب خلفية الشريحة
-    default_color = _smart_text_color(fc or slide_bg)
+    # لون افتراضي للنص: نستخدم خلفية الشريحة لتحديد التباين
+    # لكن إذا كان الشكل له خلفية — نحسب بالنسبة لها
+    bg_for_contrast = fc if fc else slide_bg
+    default_color = _smart_text_color(bg_for_contrast)
+
     y = T + 6
     for para in shape.text_frame.paragraphs:
         text = para.text.strip()
         if not text: y += 8; continue
-        # حجم ولون من الـ runs
+        # حجم ولون من الـ runs — نقرأ اللون المُحدَّد مباشرةً
         fs, tc, bold = 14, None, False
         for run in para.runs:
             try:
                 if run.font.size: fs = max(8, min(int(run.font.size/12700), 60))
                 if run.font.bold: bold = True
-                c = _text_color(run)
+                # نقرأ اللون من الـ XML مباشرة لأن pptx API أحياناً يفشل
+                c = _text_color_from_xml(run)
                 if c: tc = c
             except: pass
             break
@@ -255,10 +300,10 @@ def _draw_shape(draw, img, shape, W, H, slide_bg):
         font = _find_font(fs, bold)
         lines = _wrap(text, font, SW-12)
         for line in lines:
-            if y >= T+SH: break
+            if y >= T+SH+10: break
             draw.text((L+6, y), line, fill=tc, font=font)
             y += fs+4
-        if y >= T+SH: break
+        if y >= T+SH+10: break
 
 
 def _wrap(text, font, max_w):

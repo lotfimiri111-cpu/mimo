@@ -1904,11 +1904,18 @@ function showOk(b64Data, name, isFallback, serverFilename, presId, degree, title
   _currentDegree = degree || 'licence';
   _currentTitleAr = titleAr || '';
   _previewSlideIdx = 0;
-  _previewSlides = [];
+  _previewSlides = (inlineSlides && inlineSlides.length) ? inlineSlides : [];
   closeM();
   showLockedPreviewBanner();
-  // عرض PPTX الحقيقي مباشرة في المتصفح
-  renderPptxPreview(b64Data);
+  if(_previewSlides.length){
+    // صور المعاينة وصلت مباشرة مع الـ response — اعرضها فوراً
+    showPreviewSlide(0);
+    const msg = document.getElementById('previewLoadingMsg');
+    if(msg) msg.style.display = 'none';
+  } else {
+    // لم تصل صور — استخدم الـ polling لجلبها من السيرفر
+    loadRealPreview(presId);
+  }
 }
 
 function showLockedPreviewBanner(){
