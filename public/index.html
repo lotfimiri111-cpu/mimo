@@ -1844,7 +1844,7 @@ async function generate(){
     const isFallback = false; // v17: single unified engine, no fallbacks
     // تحويل base64 → Blob (للمعاينة فقط — ملف PPTX الحقيقي على الخادم)
     setP(100,t('modal_ok'));await sl(300);
-    showOk(json.data,d.studentName,false,json.filename,json.presentation_id,json.degree||d.degree||'licence',json.title_ar||d.titleAr||'',json.preview_slides||[],json.slides||0);
+    showOk(json.data,d.studentName,false,json.filename,json.presentation_id,json.degree||d.degree||'licence',json.title_ar||d.titleAr||'',json.preview_slides||[]);
     localStorage.removeItem('mp_v4');
   }catch(e){
     clearTimeout(_timeoutId);
@@ -1896,9 +1896,7 @@ let _selectedMethod = null;
 let _receiptFile = null;
 let _previewSlideIdx = 0;
 
-let _totalSlides = 0;
-
-function showOk(b64Data, name, isFallback, serverFilename, presId, degree, titleAr, inlineSlides, totalSlides){
+function showOk(b64Data, name, isFallback, serverFilename, presId, degree, titleAr, inlineSlides){
   _currentPresId = presId;
   _currentB64 = b64Data;
   _currentFilename = serverFilename || 'presentation.pptx';
@@ -1906,7 +1904,6 @@ function showOk(b64Data, name, isFallback, serverFilename, presId, degree, title
   _currentDegree = degree || 'licence';
   _currentTitleAr = titleAr || '';
   _previewSlideIdx = 0;
-  _totalSlides = totalSlides || 0;
   // ✅ حفظ الصور الواردة من السيرفر (LibreOffice — دقة كاملة)
   _previewSlides = inlineSlides && inlineSlides.length ? inlineSlides : [];
   closeM();
@@ -2068,9 +2065,8 @@ function _showImgSlide(idx){
   }
   imgEl.src = 'data:image/jpeg;base64,'+item.src;
   const total = _pptxSlides.length;
-  const realTotal = _totalSlides > total ? _totalSlides : total;
   const ctr = document.getElementById('slideCounter');
-  if(ctr) ctr.textContent='الشريحة '+(idx+1)+' من '+realTotal;
+  if(ctr) ctr.textContent='الشريحة '+(idx+1)+' من '+total;
   document.getElementById('prevSlideBtn').disabled=idx<=0;
   document.getElementById('nextSlideBtn').disabled=idx>=total-1;
 }
